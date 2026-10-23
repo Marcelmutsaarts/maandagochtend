@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Maandagochtend 8:30 · klassensimulatie</title>
+<meta name="description" content="Klassensimulatie voor de pabo: geef een rekenles aan groep 5, neem zeven beslissingen en ontdek wat je wel en niet zag.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg1:#0d0f12;--ink:#f4efe6;--muted:#a9adb0;--panel:rgba(16,19,23,.9);--panel2:rgba(24,28,33,.96);--line:rgba(244,239,230,.13);--line2:rgba(244,239,230,.3);
+  --acc:#f5a742;--acc2:#d9862a;--ok:#5fd38d;--mid:#ffcb3d;--bad:#ff6a55;--blue:#6aa8ff;--r:12px}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg1);color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+#app{position:fixed;inset:0;background:radial-gradient(120% 95% at 50% 30%,#2f343a 0%,#1a1d21 55%,#0a0b0d 100%)}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(130% 100% at 45% 45%,transparent 58%,rgba(0,0,0,.5) 100%)}
+
+/* top */
+#top{position:absolute;left:18px;right:18px;top:14px;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:14px;pointer-events:none;z-index:6}
+#top>*{pointer-events:auto}
+.title .kick{font:600 11.5px "JetBrains Mono",monospace;letter-spacing:.12em;color:var(--acc);text-transform:uppercase}
+.title h1{margin:3px 0 0;font:800 30px/1 "Bricolage Grotesque",sans-serif;letter-spacing:-.01em;text-shadow:0 2px 16px rgba(0,0,0,.5)}
+.title p{margin:5px 0 0;color:var(--muted);font-size:13px}
+#lesson{display:flex;flex-direction:column;align-items:center;gap:10px}
+#clock{font:800 34px/1 "Bricolage Grotesque",sans-serif;letter-spacing:.01em;text-shadow:0 2px 14px rgba(0,0,0,.6)}
+#phaseLbl{font:600 11px "JetBrains Mono",monospace;letter-spacing:.14em;color:var(--muted);margin-top:-3px}
+#steps{display:flex;gap:5px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px;backdrop-filter:blur(8px)}
+#steps span{width:10px;height:10px;border-radius:999px;background:rgba(255,255,255,.14);transition:all .3s}
+#steps span.done{background:var(--acc2)}
+#steps span.cur{background:var(--acc);width:30px}
+.tools{display:flex;gap:7px;justify-content:flex-end;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;backdrop-filter:blur(8px);white-space:nowrap}
+.btn:hover{border-color:var(--line2)}
+.btn.on{background:var(--ink);color:#141414;border-color:var(--ink)}
+.btn.acc{background:var(--acc);border-color:var(--acc);color:#1d1408}
+.btn svg{width:16px;height:16px}
+
+/* decision card */
+#card{position:absolute;right:18px;top:118px;width:380px;max-height:calc(100% - 140px);overflow:auto;background:var(--panel2);border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;z-index:7;
+  box-shadow:0 18px 50px rgba(0,0,0,.45);transform:translateX(30px);opacity:0;pointer-events:none;transition:all .45s cubic-bezier(.2,.8,.2,1);scrollbar-width:thin}
+#card.open{transform:none;opacity:1;pointer-events:auto}
+#card .time{font:600 11.5px "JetBrains Mono",monospace;letter-spacing:.12em;color:var(--acc);text-transform:uppercase}
+#card h2{margin:4px 0 8px;font:800 24px/1.1 "Bricolage Grotesque",sans-serif}
+#card .sit{margin:0 0 12px;color:#ddd6ca;font-size:14.5px;line-height:1.5}
+#card .q{font-weight:700;font-size:14.5px;margin:0 0 10px}
+.opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:12px;padding:11px 12px 11px 44px;margin:0 0 8px;cursor:pointer;position:relative;transition:border-color .2s,background .2s}
+.opt:hover{border-color:var(--acc);background:rgba(245,167,66,.07)}
+.opt b{display:block;font-size:14.5px;margin-bottom:3px}
+.opt span{display:block;color:var(--muted);font-size:13px;line-height:1.45}
+.opt kbd{position:absolute;left:12px;top:11px;width:22px;height:22px;border-radius:7px;display:grid;place-items:center;background:rgba(255,255,255,.08);font:600 12px "JetBrains Mono",monospace}
+.tip{font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);margin-top:10px;padding-top:9px;line-height:1.45}
+.tip b{color:var(--ink)}
+.sel{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px;min-height:30px}
+.sel i{font-style:normal;background:var(--acc);color:#1d1408;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:700;cursor:pointer}
+.sel i::after{content:" ×";opacity:.6}
+.sel em{color:var(--muted);font-size:13px;font-style:normal;align-self:center}
+.chk{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 12px;cursor:pointer;font-size:13.5px;line-height:1.4}
+.chk input{margin-top:3px;accent-color:var(--acc);width:16px;height:16px}
+.go{width:100%;border:0;background:var(--acc);color:#1d1408;font-weight:800;font-size:15px;padding:12px;border-radius:12px;cursor:pointer}
+.go:disabled{opacity:.4;cursor:default}
+
+/* caption */
+#caption{position:absolute;left:50%;bottom:26px;transform:translateX(-50%) translateY(10px);max-width:min(760px,calc(100% - 40px));background:rgba(10,12,14,.82);border:1px solid var(--line);border-radius:14px;padding:12px 18px;font-size:15.5px;line-height:1.45;text-align:center;z-index:6;opacity:0;transition:all .4s;pointer-events:none;backdrop-filter:blur(6px)}
+#caption.on{opacity:1;transform:translateX(-50%)}
+#caption small{display:block;font:600 10.5px "JetBrains Mono",monospace;letter-spacing:.14em;color:var(--acc);margin-bottom:4px}
+#skip{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:5;display:none}
+
+/* kid card */
+#kid{position:absolute;z-index:8;width:280px;background:var(--panel2);border:1px solid var(--line2);border-radius:14px;padding:13px 14px;box-shadow:0 14px 40px rgba(0,0,0,.5);display:none}
+#kid.on{display:block}
+#kid h3{margin:0 0 2px;font:800 19px "Bricolage Grotesque",sans-serif}
+#kid .lbl{font:600 10.5px "JetBrains Mono",monospace;letter-spacing:.12em;color:var(--acc);margin:9px 0 3px;text-transform:uppercase}
+#kid p{margin:0;font-size:13.5px;line-height:1.45;color:#e2dbcf}
+#kid .x{position:absolute;right:8px;top:6px;border:0;background:none;font-size:20px;color:var(--muted);cursor:pointer}
+#kid .act{margin-top:10px;width:100%;justify-content:center}
+.bars{display:grid;grid-template-columns:auto 1fr;gap:5px 9px;align-items:center;font-size:12px;color:var(--muted);margin-top:4px}
+.bar{height:7px;border-radius:9px;background:rgba(255,255,255,.1);overflow:hidden}.bar i{display:block;height:100%;border-radius:9px}
+#tipName{position:absolute;z-index:7;pointer-events:none;background:rgba(10,12,14,.85);border:1px solid var(--line);border-radius:8px;padding:3px 8px;font-size:12.5px;font-weight:700;display:none;white-space:nowrap}
+#tags{position:absolute;inset:0;pointer-events:none;z-index:5}
+#tags b{position:absolute;font-size:11.5px;font-weight:700;background:rgba(10,12,14,.72);border-radius:6px;padding:1px 6px;transform:translate(-50%,-100%);white-space:nowrap}
+#tags b.on{background:var(--acc);color:#1d1408}
+
+/* modals */
+.modal{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(6,8,10,.62);backdrop-filter:blur(5px);padding:20px}
+.modal.open{display:flex}
+.mcard{background:var(--panel2);border:1px solid var(--line);border-radius:20px;max-width:640px;width:100%;max-height:100%;overflow:auto;padding:28px 30px;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.mcard h2{margin:0 0 6px;font:800 34px/1.05 "Bricolage Grotesque",sans-serif}
+.mcard h3{margin:22px 0 8px;font:800 18px "Bricolage Grotesque",sans-serif}
+.mcard p,.mcard li{color:#ddd6ca;font-size:15px;line-height:1.55}
+.mcard ul{padding-left:20px;margin:8px 0}
+.kick2{font:600 12px "JetBrains Mono",monospace;letter-spacing:.14em;color:var(--acc);text-transform:uppercase}
+.lesbox{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:16px 0;font-size:14px}
+.lesbox dt{color:var(--muted);font:600 11.5px "JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase;padding-top:2px}
+.lesbox dd{margin:0}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 18px}
+.mode{border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;text-align:left;background:none}
+.mode b{display:block;font-size:15px;margin-bottom:3px}.mode span{color:var(--muted);font-size:13px;line-height:1.4}
+.mode.on{border-color:var(--acc);background:rgba(245,167,66,.08)}
+.big{width:100%;border:0;background:var(--acc);color:#1d1408;font:800 19px "Bricolage Grotesque",sans-serif;padding:15px;border-radius:14px;cursor:pointer}
+.foot{margin-top:14px;font-size:12px;color:var(--muted);text-align:center}
+
+/* report */
+#report .mcard{max-width:980px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+.tile{border:1px solid var(--line);border-radius:14px;padding:13px 14px;background:rgba(255,255,255,.03)}
+.tile small{display:block;font:600 10.5px "JetBrains Mono",monospace;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.tile b{display:block;font:800 36px/1.05 "Bricolage Grotesque",sans-serif;margin:6px 0 2px}
+.tile span{font-size:12.5px;color:var(--muted);line-height:1.35;display:block}
+.tile .prev{font-size:11.5px;margin-top:4px}
+#chart{width:100%;height:150px;display:block;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}
+.kidsum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ks{border:1px solid var(--line);border-radius:14px;padding:11px 13px;font-size:13px;line-height:1.45;color:#d9d2c6}
+.ks b{font-size:15px;color:var(--ink)}
+.ks .st{float:right;font:600 10.5px "JetBrains Mono",monospace;letter-spacing:.08em;padding:3px 7px;border-radius:999px}
+.ks .st.y{background:rgba(95,211,141,.18);color:var(--ok)}.ks .st.n{background:rgba(255,106,85,.16);color:var(--bad)}
+.ks em{display:block;font-style:normal;color:var(--muted);font-size:12px;margin-top:5px}
+.dec{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px;display:grid;grid-template-columns:62px 1fr;gap:12px}
+.dec .t{font:600 12px "JetBrains Mono",monospace;color:var(--muted)}
+.dec .t i{display:block;width:12px;height:12px;border-radius:99px;margin-top:6px}
+.dec h4{margin:0 0 3px;font-size:15px}
+.dec .you{font-size:13px;color:var(--muted);margin-bottom:5px}
+.dec p{margin:0;font-size:13.5px;line-height:1.5;color:#ddd6ca}
+.dec .th{display:inline-block;margin-top:6px;font:600 10.5px "JetBrains Mono",monospace;letter-spacing:.06em;color:var(--acc);border:1px solid rgba(245,167,66,.35);border-radius:999px;padding:2px 8px}
+.rbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.rbtns .big{width:auto;padding:12px 20px;font-size:16px}
+.rbtns .btn{padding:12px 16px;font-size:14px}
+.qs{background:rgba(245,167,66,.07);border:1px solid rgba(245,167,66,.3);border-radius:14px;padding:12px 16px}
+.qs li{font-size:14px}
+
+#xbar{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:7;display:none;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--acc);border-radius:14px;padding:8px 10px 8px 16px;font-size:14px}
+#xbar.on{display:flex}
+.legend{display:flex;gap:10px;font-size:12px;color:var(--muted)}.legend i{display:inline-block;width:10px;height:10px;border-radius:99px;margin-right:4px;vertical-align:-1px}
+
+#loader{position:absolute;inset:0;z-index:30;display:grid;place-items:center;background:var(--bg1);transition:opacity .6s}
+#loader.gone{opacity:0;pointer-events:none}
+#loader h3{font:800 22px "Bricolage Grotesque",sans-serif;margin:14px 0 4px;text-align:center}
+#loader p{color:var(--muted);text-align:center;margin:0}
+.spin{width:38px;height:38px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:var(--acc);animation:sp 1s linear infinite;margin:0 auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+#err{position:absolute;inset:0;z-index:40;display:none;place-items:center;background:var(--bg1);padding:30px;text-align:center}
+#err.open{display:grid}
+
+body.present .title h1{font-size:40px}
+body.present #card{width:440px}
+body.present #card .sit,body.present .opt b{font-size:17px}
+body.present .opt span{font-size:15px}
+body.present #caption{font-size:19px}
+@media (max-width:900px){
+  #top{grid-template-columns:1fr auto}
+  #lesson{grid-column:1/-1;grid-row:2}
+  .title h1{font-size:22px}.title p{display:none}
+  #card{left:12px;right:12px;width:auto;top:auto;bottom:12px;max-height:55%}
+  .tiles{grid-template-columns:repeat(2,1fr)}.kidsum{grid-template-columns:1fr}
+  .btn .t{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="c" aria-label="3D-klaslokaal van groep 5"></canvas>
+  <div id="vignette"></div>
+  <div id="tags"></div>
+
+  <header id="top">
+    <div class="title">
+      <div class="kick">Klassensimulatie · pabo</div>
+      <h1>Maandagochtend</h1>
+      <p>Groep 5 · rekenen · 24 kinderen · 7 beslissingen</p>
+    </div>
+    <div id="lesson">
+      <div id="clock">08:30</div>
+      <div id="steps" aria-label="Voortgang van de les"></div>
+      <div id="phaseLbl">VOOR DE LES</div>
+    </div>
+    <div class="tools">
+      <button class="btn" id="bHelp2" title="Betrokkenheid zichtbaar maken (alleen in oefenmodus)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/></svg><span class="t">Hulp</span></button>
+      <button class="btn" id="bSound" title="Geluid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWave" d="M17 9l4 6M21 9l-4 6"/></svg><span class="t">Geluid</span></button>
+      <button class="btn" id="bPresent" title="Presenteren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8"/></svg><span class="t">Presenteren</span></button>
+      <button class="btn" id="bInfo" title="Uitleg">?</button>
+    </div>
+  </header>
+
+  <aside id="card" aria-live="polite"></aside>
+  <div id="caption"></div>
+  <div id="kid"></div>
+  <div id="tipName"></div>
+  <div id="xbar"><b>Röntgenblik</b><span class="legend"><span><i style="background:var(--ok)"></i>betrokken</span><span><i style="background:var(--mid)"></i>wisselend</span><span><i style="background:var(--bad)"></i>afgehaakt</span></span><span style="color:var(--muted)">Klik op een kind</span><button class="btn acc" id="xBack">Terug naar je resultaten</button></div>
+
+  <div class="modal open" id="intro"><div class="mcard">
+    <div class="kick2">Klassensimulatie voor de pabo</div>
+    <h2>Maandagochtend 8:30</h2>
+    <p>Je staat voor groep 5. Vierentwintig kinderen, één rekenles, zeven beslissingen. Een les gaat nooit alleen over de stof: wie zie je wél, en wie mis je?</p>
+    <dl class="lesbox">
+      <dt>Groep</dt><dd>Groep 5, 24 kinderen in 6 tafelgroepjes</dd>
+      <dt>Les</dt><dd>Rekenen: vermenigvuldigen boven de 10 (6 × 14)</dd>
+      <dt>Lesdoel</dt><dd>Ik kan een keersom met een getal boven de 10 uitrekenen door te splitsen.</dd>
+      <dt>Tijd</dt><dd>08:30 – 09:15</dd>
+    </dl>
+    <p style="margin:0"><b>Kijk goed.</b> Tijdens de les zie je geen scores, alleen wat een leerkracht ook ziet. Klik op een kind om te zien wat het doet.</p>
+    <div class="modes" role="radiogroup" aria-label="Modus">
+      <button class="mode on" data-mode="echt" role="radio" aria-checked="true"><b>Echt</b><span>Je ziet alleen gedrag. Het meest leerzaam.</span></button>
+      <button class="mode" data-mode="hulp" role="radio" aria-checked="false"><b>Met hulp</b><span>Gekleurde ringen tonen de betrokkenheid. Voor een eerste keer.</span></button>
+    </div>
+    <button class="big" id="bStart">▶ Start de les</button>
+    <div class="foot">Een oefensimulatie: de kinderen en hun verhalen zijn verzonnen · AI voor Docenten</div>
+  </div></div>
+
+  <div class="modal" id="report"><div class="mcard" id="repBody"></div></div>
+
+  <div class="modal" id="info"><div class="mcard">
+    <div class="kick2">Over deze simulatie</div>
+    <h2>Zo werkt het</h2>
+    <ul>
+      <li>Je geeft een rekenles van 45 minuten. Op <b>zeven momenten</b> kies je wat je doet (toetsen <b>1</b>, <b>2</b>, <b>3</b>).</li>
+      <li>Daarna speelt de klas zich af. Onderin lees je <b>wat je ziet</b>: alleen gedrag, geen oordeel.</li>
+      <li><b>Klik op een kind</b> om te zien wat het doet. Drie keer per les kun je kort bij een kind langsgaan.</li>
+      <li>Zes kinderen hebben een verhaal dat je alleen opmerkt als je goed kijkt. In de <b>nabespreking</b> zie je wat er echt speelde.</li>
+      <li>Sleep om de klas te draaien, scroll om te zoomen.</li>
+    </ul>
+    <h3>Voor de opleider</h3>
+    <p>De simulatie oefent het <b>verschil tussen observeren en interpreteren</b>, het nut van <b>alle leerlingen tegelijk laten antwoorden</b>, <b>convergente differentiatie</b> op basis van wat je ziet, en <b>pedagogisch handelen</b> naast didactisch handelen. Laat studenten na afloop in tweetallen hun keuzes vergelijken: wie zag Bram?</p>
+    <button class="big" id="infoClose" style="margin-top:14px">Terug naar de les</button>
+  </div></div>
+
+  <div id="loader"><div><div class="spin"></div><h3>De klas wordt klaargezet…</h3><p>Stoelen van de tafels, bord aan</p></div></div>
+  <div id="err"><div><h3>Er ging iets mis</h3><p id="errMsg"></p></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+window.__err=function(m){document.getElementById('errMsg').textContent=m;document.getElementById('err').classList.add('open');document.getElementById('loader').classList.add('gone');};
+window.addEventListener('error',function(){if(!window.THREE)window.__err('De 3D-bibliotheek kon niet geladen worden. Controleer de internetverbinding.');});
+</script>
+<script>
+(function(){
+"use strict";
+if(!window.THREE||!THREE.OrbitControls){window.__err('De 3D-bibliotheek kon niet geladen worden. Controleer de internetverbinding.');return;}
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const ease=t=>{t=clamp(t,0,1);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;};
+const TAU=Math.PI*2,reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+let R=mulberry32(5);
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+const store={get(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+
+/* ================= renderer ================= */
+const canvas=$('#c');let renderer;
+try{renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});}catch(e){window.__err('Je browser ondersteunt geen WebGL. Probeer Chrome of Edge.');return;}
+renderer.setClearColor(0,0);renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(36,1,.1,200);
+const controls=new THREE.OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=5;controls.maxDistance=26;controls.maxPolarAngle=1.32;controls.enablePan=false;
+const HOME={p:[9.9,8.9,11.6],t:[1.75,.1,.25]};
+camera.position.set(...HOME.p);controls.target.set(...HOME.t);
+scene.add(new THREE.HemisphereLight(0xfff6e8,0x5a4632,.7));
+const sun=new THREE.DirectionalLight(0xfff0d8,1.05);sun.position.set(-12,11,3);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-8,right:8,top:7,bottom:-7,near:1,far:40});sun.shadow.bias=-.0005;scene.add(sun);
+const fill=new THREE.DirectionalLight(0xc8d8ff,.32);fill.position.set(8,9,10);scene.add(fill);
+
+/* ================= helpers ================= */
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');draw(x,w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;t.userData={c,x};return t;}
+function mesh(geo,mat,pos,rot,parent,noShadow){const m=new THREE.Mesh(geo,mat);if(pos)m.position.set(pos[0],pos[1],pos[2]);if(rot)m.rotation.set(rot[0],rot[1],rot[2]);m.castShadow=!noShadow;m.receiveShadow=true;(parent||scene).add(m);return m;}
+const std=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.75},o||{}));
+const box=(w,h,d,mat,x,y,z,p,ns)=>mesh(new THREE.BoxGeometry(w,h,d),mat,[x,y,z],0,p,ns);
+function rr(x,X,y,w,h,r){x.beginPath();x.moveTo(X+r,y);x.arcTo(X+w,y,X+w,y+h,r);x.arcTo(X+w,y+h,X,y+h,r);x.arcTo(X,y+h,X,y,r);x.arcTo(X,y,X+w,y,r);x.closePath();}
+
+/* ================= het lokaal ================= */
+const MAT={wall:std(0xece3d3,{roughness:.95}),wall2:std(0xd9cdb8,{roughness:.95}),trim:std(0x8d7a62),wood:std(0xcfa774,{roughness:.6}),woodD:std(0x8f6a45,{roughness:.6}),
+  table:std(0xe2cfac,{roughness:.55}),metal:std(0x8b9097,{roughness:.4,metalness:.4}),dark:std(0x2b2f35,{roughness:.5}),glass:new THREE.MeshStandardMaterial({color:0xcfe8ff,transparent:true,opacity:.22,roughness:.1}),
+  green:std(0x5f8f4e),pot:std(0xb5653f)};
+const floorTex=canvasTex(1024,820,(x,w,h)=>{x.fillStyle='#cdbb9c';x.fillRect(0,0,w,h);for(let i=0;i<w;i+=64)for(let j=0;j<h;j+=64){x.fillStyle=`rgba(${(i/64+j/64)%2?'255,255,255,.035':'0,0,0,.03'})`;x.fillRect(i,j,64,64);}
+  for(let i=0;i<3000;i++){x.fillStyle=`rgba(80,60,40,${Math.random()*.05})`;x.fillRect(Math.random()*w,Math.random()*h,2,2);}});
+mesh(new THREE.BoxGeometry(10,.12,8),std(0xffffff,{map:floorTex,roughness:.85}),[0,-.06,0],0,scene,true);
+// sokkel van het diorama
+mesh(new THREE.BoxGeometry(10.5,.5,8.5),std(0x3a2f27,{roughness:.8}),[0,-.37,0],0,scene,true);
+// voorwand
+box(10.24,2.8,.12,MAT.wall,0,1.4,-4.06);box(10.24,.12,.16,MAT.trim,0,.06,-3.98,0,true);
+// buiten
+const outTex=canvasTex(1024,320,(x,w,h)=>{const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#9cc8ef');g.addColorStop(.7,'#d9ecf7');g.addColorStop(1,'#cfe3c9');x.fillStyle=g;x.fillRect(0,0,w,h);
+  for(let i=0;i<14;i++){const cx=Math.random()*w,cy=h*.55+Math.random()*30,r=40+Math.random()*50;x.fillStyle=['#6f9c5c','#5d8a4c','#87ae6a'][i%3];x.beginPath();x.arc(cx,cy,r,0,TAU);x.fill();}
+  x.fillStyle='#b9c7b0';x.fillRect(0,h*.8,w,h*.2);});
+
+// linkerwand met ramen
+const WX=-5.06,winZ=[[-3.1,-1.3],[-.9,.9],[1.3,3.1]];
+box(.12,.9,8.12,MAT.wall2,WX,.45,0);box(.12,.45,8.12,MAT.wall2,WX,2.575,0);
+[[-4.06,-3.1],[-1.3,-.9],[.9,1.3],[3.1,4.06]].forEach(([a,b])=>box(.12,1.45,b-a,MAT.wall2,WX,1.625,(a+b)/2));
+winZ.forEach(([a,b],wi)=>{const wt=outTex.clone();wt.needsUpdate=true;wt.repeat.set((b-a)/9,1);wt.offset.set(((a+4)/9),0);mesh(new THREE.PlaneGeometry(b-a,1.45),new THREE.MeshBasicMaterial({map:wt,toneMapped:false}),[WX-.02,1.625,(a+b)/2],[0,Math.PI/2,0],scene,true);box(.2,.05,b-a+.1,MAT.trim,WX+.08,.9,(a+b)/2,0,true);box(.06,1.45,.05,MAT.trim,WX,1.625,(a+b)/2,0,true);});
+// lage rechter- en achterwand (diorama-snede)
+box(.12,.5,8.12,MAT.wall2,5.06,.25,0);box(10.24,.5,.12,MAT.wall2,0,.25,4.06);
+// deurkozijn
+box(.16,2.15,.1,MAT.woodD,5.06,1.07,-3.55);box(.16,2.15,.1,MAT.woodD,5.06,1.07,-2.45);box(.16,.1,1.2,MAT.woodD,5.06,2.15,-3.0);
+// digibord
+const BW=2.7,BH=1.5;box(BW+.16,BH+.16,.08,MAT.dark,.4,1.6,-3.97);
+const boardTex=canvasTex(1080,600,()=>{});const boardScreen=mesh(new THREE.PlaneGeometry(BW,BH),new THREE.MeshBasicMaterial({map:boardTex,toneMapped:false}),[.4,1.6,-3.92],0,scene,true);
+box(1.1,1.2,.04,std(0xf7f7f2),-1.6,1.6,-3.98);box(1.1,1.2,.04,std(0xf7f7f2),2.4,1.6,-3.98);box(BW+2.6,.05,.12,MAT.metal,.4,.82,-3.95,0,true);
+// klok
+const clockTex=canvasTex(256,256,()=>{});mesh(new THREE.CircleGeometry(.24,40),new THREE.MeshBasicMaterial({map:clockTex,toneMapped:false}),[-3.55,2.35,-3.98],0,scene,true);
+// posters (rustig gehouden)
+const posterTex=canvasTex(400,520,(x,w,h)=>{x.fillStyle='#fffaf0';x.fillRect(0,0,w,h);x.fillStyle='#e8813a';x.fillRect(0,0,w,74);x.fillStyle='#fff';x.font='700 40px Instrument Sans, sans-serif';x.fillText('Onze afspraken',26,52);
+  x.fillStyle='#333';x.font='600 30px Instrument Sans, sans-serif';['🙋 Vinger op','🤫 Stil = stil','🤝 Help elkaar','⭐ Fouten mogen'].forEach((t,i)=>x.fillText(t,30,140+i*92));});
+mesh(new THREE.PlaneGeometry(.7,.92),std(0xffffff,{map:posterTex,roughness:.9}),[-3.55,1.45,-3.99],0,scene,true);
+const tafTex=canvasTex(400,520,(x,w,h)=>{x.fillStyle='#f3f8ff';x.fillRect(0,0,w,h);x.fillStyle='#3d7ad6';x.fillRect(0,0,w,74);x.fillStyle='#fff';x.font='700 40px Instrument Sans, sans-serif';x.fillText('Tafel van 6',26,52);
+  x.fillStyle='#223';x.font='600 30px JetBrains Mono, monospace';for(let i=1;i<=10;i++)x.fillText(`${i} × 6 = ${i*6}`,40,108+i*38);});
+mesh(new THREE.PlaneGeometry(.62,.8),std(0xffffff,{map:tafTex,roughness:.9}),[3.95,1.55,-3.99],0,scene,true);
+// bureau leerkracht
+box(1.4,.06,.7,MAT.wood,3.55,.74,-3.25);[[-.62,-.3],[.62,-.3],[-.62,.3],[.62,.3]].forEach(([a,b])=>box(.05,.72,.05,MAT.metal,3.55+a,.36,-3.25+b));
+box(.42,.02,.3,MAT.dark,3.4,.78,-3.25);mesh(new THREE.BoxGeometry(.42,.28,.02),MAT.dark,[3.4,.92,-3.38],[-.25,0,0]);
+// kast met bakjes
+box(.5,.9,2.6,MAT.wood,4.7,.45,1.2);[0,1,2,3].forEach(i=>box(.42,.12,.5,std([0xe25c4a,0x4c8dff,0xf5c542,0x5fbf7a][i]),4.62,.93,.2+i*.66));
+// plant
+mesh(new THREE.CylinderGeometry(.16,.12,.3,14),MAT.pot,[-4.55,.15,3.55]);for(let i=0;i<7;i++){const a=i/7*TAU;mesh(new THREE.SphereGeometry(.17,10,8),MAT.green,[-4.55+Math.cos(a)*.12,.45+i%3*.08,3.55+Math.sin(a)*.12]);}
+
+/* ================= tafelgroepjes ================= */
+const GROUPS=[[-2.7,-.75],[.2,-.75],[3.1,-.75],[-2.7,2.05],[.2,2.05],[3.1,2.05]];
+const CHAIRC=[0xe2614c,0x4a86d8,0xf0b93c,0x56b47a,0x9a6ad6,0x2fb3b0];
+const SEATOFF=[[-.62,-.32,Math.PI/2],[-.62,.32,Math.PI/2],[.62,-.32,-Math.PI/2],[.62,.32,-Math.PI/2]];
+function chair(x,z,face,col){const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=face;scene.add(g);const m=std(col,{roughness:.5});
+  box(.36,.04,.34,m,0,.36,-.04,g);box(.36,.3,.03,m,0,.56,-.22,g);[[-.15,-.18],[.15,-.18],[-.15,.12],[.15,.12]].forEach(([a,b])=>box(.025,.36,.025,MAT.metal,a,.18,b,g));return g;}
+GROUPS.forEach(([gx,gz],gi)=>{box(1.0,.05,1.32,MAT.table,gx,.62,gz);box(.02,.03,1.32,MAT.trim,gx,.62,gz,0,true);
+  [[-.45,-.6],[.45,-.6],[-.45,.6],[.45,.6]].forEach(([a,b])=>box(.04,.6,.04,MAT.metal,gx+a,.3,gz+b));
+  SEATOFF.forEach(([dx,dz,f])=>chair(gx+dx*1.08,gz+dz,f,CHAIRC[gi]));
+  // schriften
+  SEATOFF.forEach(([dx,dz],k)=>{box(.2,.012,.27,std([0xfafafa,0x9ec5ff,0xffd27a,0xb4e6c3][(gi+k)%4]),gx+dx*.55,.652,gz+dz,0,true);});});
+// instructietafel (niertafel)
+const IT={x:-3.35,z:-3.45};
+(function(){const sh=new THREE.Shape();sh.absarc(0,0,1.15,Math.PI*.12,Math.PI*.88,false);sh.absarc(0,0,.5,Math.PI*.88,Math.PI*.12,true);
+  const g=new THREE.ExtrudeGeometry(sh,{depth:.05,bevelEnabled:false,curveSegments:24});mesh(g,MAT.table,[IT.x,.67,IT.z],[Math.PI/2,0,0],scene);
+  [[-.85,.25],[.85,.25],[0,1.0]].forEach(([a,b])=>box(.04,.62,.04,MAT.metal,IT.x+a,.31,IT.z+b));})();
+const ITSEATS=[-.95,-.32,.32,.95].map(a=>({x:IT.x+Math.sin(a)*1.45,z:IT.z+Math.cos(a)*1.45,face:a+Math.PI}));
+ITSEATS.forEach(s=>chair(s.x,s.z,s.face,0xb9b1a4));
+
+
+/* ================= de klas ================= */
+const SKIN=[0xf1c9a5,0xdfae86,0xb07a52,0x7a4e2e,0xe8b48a,0xc8946a];const HAIR=[0x2b1d14,0x6b4423,0xd9b26a,0x1a1a1a,0x8a3b1d,0x4a2f1c];
+const SHIRT=[0x5b7fbf,0xd96b5c,0x6fae84,0xe3b04b,0x8c6fb8,0x4fa7a8,0xc7c2b8,0x3d4a5c,0xd98a6c,0x7b9a4a];
+// p = profiel. und = begrip, att = betrokkenheid, well = welbevinden, imp = impulsief, shy = stil, drift = aandachtsverlies per minuut
+const KIDS=[
+ {id:'noor',n:'Noor',g:0,s:0,learn:.35,und:.1,att:.72,well:.62,imp:.1,shy:.5,drift:.032,key:1,long:1},
+ {id:'finn',n:'Finn',g:0,s:1,und:.42,att:.72,well:.75,imp:.3,shy:.3,drift:.03},
+ {id:'lotte',n:'Lotte',g:0,s:2,und:.32,att:.72,well:.5,imp:.05,shy:.95,drift:.025,key:1,long:1},
+ {id:'emma',n:'Emma',g:0,s:3,und:.48,att:.78,well:.78,imp:.2,shy:.3,drift:.022,long:1},
+ {id:'sem',n:'Sem',g:1,s:0,und:.45,att:.6,well:.68,imp:.95,shy:0,drift:.07},
+ {id:'jesse',n:'Jesse',g:1,s:1,und:.38,att:.64,well:.7,imp:.65,shy:.1,drift:.05},
+ {id:'mila',n:'Mila',g:1,s:2,und:.45,att:.76,well:.76,imp:.2,shy:.4,drift:.024,long:1},
+ {id:'levi',n:'Levi',g:1,s:3,und:.4,att:.7,well:.72,imp:.4,shy:.2,drift:.035},
+ {id:'daan',n:'Daan',g:2,s:0,und:.72,att:.74,well:.74,imp:.5,shy:.1,drift:.06,key:1},
+ {id:'ravi',n:'Ravi',g:2,s:1,und:.42,att:.72,well:.74,imp:.35,shy:.3,drift:.03},
+ {id:'saar',n:'Saar',g:2,s:2,und:.62,att:.8,well:.78,imp:.15,shy:.4,drift:.03,long:1},
+ {id:'julia',n:'Julia',g:2,s:3,und:.4,att:.74,well:.74,imp:.25,shy:.4,drift:.028,long:1},
+ {id:'fatima',n:'Fatima',g:3,s:0,learn:.8,und:.4,att:.76,well:.66,imp:.05,shy:.85,drift:.024,key:1,long:1},
+ {id:'evi',n:'Evi',g:3,s:1,und:.46,att:.76,well:.76,imp:.25,shy:.35,drift:.026,long:1},
+ {id:'yara',n:'Yara',g:3,s:2,und:.44,att:.84,well:.8,imp:.45,shy:0,drift:.02,long:1},
+ {id:'liam',n:'Liam',g:3,s:3,und:.36,att:.68,well:.72,imp:.45,shy:.2,drift:.04},
+ {id:'mo',n:'Mo',g:4,s:0,und:.38,att:.42,well:.22,imp:.2,shy:.7,drift:.05,key:1},
+ {id:'tess',n:'Tess',g:4,s:1,und:.44,att:.74,well:.76,imp:.2,shy:.4,drift:.026,long:1},
+ {id:'bram',n:'Bram',g:4,s:2,learn:.45,und:.15,att:.7,well:.68,imp:.15,shy:.75,drift:.028,key:1},
+ {id:'luuk',n:'Luuk',g:4,s:3,und:.46,att:.72,well:.74,imp:.35,shy:.25,drift:.03},
+ {id:'zoe',n:'Zoë',g:5,s:0,und:.38,att:.72,well:.74,imp:.3,shy:.4,drift:.03,long:1},
+ {id:'milan',n:'Milan',g:5,s:1,und:.35,att:.66,well:.72,imp:.5,shy:.2,drift:.045},
+ {id:'ilse',n:'Ilse',g:5,s:2,und:.45,att:.76,well:.76,imp:.15,shy:.5,drift:.024,long:1},
+ {id:'adam',n:'Adam',g:5,s:3,und:.38,att:.7,well:.72,imp:.4,shy:.2,drift:.035}];
+const PROFILE={
+ noor:'Noor heeft de tafels nog niet geautomatiseerd en rekent veel op de vingers. Er is een vermoeden van dyscalculie. Splitsen lukt pas met materiaal of een tekening erbij.',
+ lotte:'Lotte begrijpt meer dan ze laat zien, maar heeft faalangst. Ze schrijft liever niets op dan iets fouts, en vragen stellen voor de klas durft ze niet.',
+ fatima:'Fatima woont twee jaar in Nederland. Kale sommen gaan prima, maar woorden als "krat" kent ze niet. Bij de verhaaltjessom loopt ze vast op de taal, niet op het rekenen.',
+ mo:'De ouders van Mo zijn uit elkaar; zijn vader is dit weekend verhuisd. Hij heeft slecht geslapen. Vandaag gaat zijn hoofd niet over rekenen, en dat mag gezien worden.',
+ daan:'Daan is een sterke rekenaar. Bij lange uitleg verveelt hij zich en gaat hij tekenen of anderen afleiden. Hij heeft uitdaging nodig, geen extra uitleg.',
+ bram:'Bram valt nooit op: hij lijkt altijd bezig. Maar hij schrijft antwoorden over van zijn buurman. Zo blijft zijn achterstand onzichtbaar.',
+ sem:'Sem is beweeglijk en impulsief. Hij wil best, maar lang stilzitten is moeilijk. Korte opdrachten, nabijheid en heldere afspraken helpen hem het meest.',
+ jesse:'Jesse is een meeloper: als Sem afdwaalt, doet Jesse mee.',
+ yara:'Yara steekt altijd haar vinger op en weet vaak het antwoord. Als zij de beurten krijgt, lijkt het alsof de hele klas het snapt.',
+ saar:'Saar rekent sterk en werkt zelfstandig. Ze is snel klaar en kan meer aan.'};
+const GENERIC='Een gemiddelde rekenaar. Volgt de les goed als de uitleg helder is en iedereen actief mee moet doen.';
+const SIGNALS=[
+ {id:'mo',how:'Hoofd op tafel, capuchon op. Zichtbaar bij binnenkomst en de hele les door.',lbl:'Welbevinden'},
+ {id:'noor',how:'Fout antwoord op het wisbordje; telt op de vingers bij het zelfstandig werken.',lbl:'Rekenen'},
+ {id:'fatima',how:'Goed bij kale sommen, vast bij de verhaaltjessom: kijkt bij de buurvrouw en wijst naar een woord.',lbl:'Taal'},
+ {id:'lotte',how:'Leeg wisbordje; gumt steeds uit; durft niets te vragen.',lbl:'Faalangst'},
+ {id:'daan',how:'Tekent in de kantlijn tijdens lange uitleg; is als eerste klaar.',lbl:'Uitdaging'},
+ {id:'bram',how:'Lijkt bezig, maar schrijft over. Alleen zichtbaar als iedereen tegelijk een antwoord laat zien.',lbl:'Verborgen achterstand'}];
+const KI={};KIDS.forEach((k,i)=>{k.i=i;KI[k.id]=k;const [gx,gz]=GROUPS[k.g];const [dx,dz,f]=SEATOFF[k.s];k.seat={x:gx+dx*1.08,z:gz+dz,face:f};k.table={x:gx+dx*.55,z:gz+dz};
+  k.side=KIDS.find(o=>false);});
+KIDS.forEach(k=>{if(k.learn==null)k.learn=1;k.buddy=KIDS.find(o=>o.g===k.g&&o.s===(k.s^1));k.opp=KIDS.find(o=>o.g===k.g&&o.s===(k.s^2));k.tmpl={und:k.und,att:k.att,well:k.well};});
+
+// kind-model (zittend, kijkt naar +z)
+const kgeo={torso:new THREE.CapsuleGeometry(.13,.24,3,10),head:new THREE.SphereGeometry(.112,14,12),arm:new THREE.CapsuleGeometry(.04,.26,3,6),leg:new THREE.CapsuleGeometry(.055,.34,3,6),
+  hairS:new THREE.SphereGeometry(.12,14,10,0,TAU,0,Math.PI*.55),hairL:new THREE.CapsuleGeometry(.1,.14,3,8),hood:new THREE.SphereGeometry(.135,14,10,0,TAU,0,Math.PI*.62)};
+function buildKid(k){const root=new THREE.Group();root.rotation.order='YXZ';scene.add(root);
+  const sk=std(SKIN[(k.i*7)%SKIN.length]);const sh=std(SHIRT[(k.i*3)%SHIRT.length],{roughness:.8});const pants=std(0x2f3a4f);
+  const pelvis=new THREE.Group();pelvis.position.y=.42;root.add(pelvis);
+  const hipL=new THREE.Group(),hipR=new THREE.Group();hipL.position.set(-.07,0,0);hipR.position.set(.07,0,0);pelvis.add(hipL,hipR);
+  mesh(kgeo.leg,pants,[0,-.19,0],0,hipL);mesh(kgeo.leg,pants,[0,-.19,0],0,hipR);
+  const tor=new THREE.Group();pelvis.add(tor);mesh(kgeo.torso,sh,[0,.2,0],0,tor);
+  const head=new THREE.Group();head.position.y=.47;tor.add(head);mesh(kgeo.head,sk,[0,.02,0],0,head);
+  const hc=HAIR[(k.i*5)%HAIR.length];
+  if(k.id==='mo'){mesh(kgeo.hood,std(0x3b4250),[0,.04,-.01],[-.25,0,0],head);}else{mesh(kgeo.hairS,std(hc),[0,.045,-.012],[-.25,0,0],head);if(k.long)mesh(kgeo.hairL,std(hc),[0,-.06,-.07],[.1,0,0],head);}
+  const shL=new THREE.Group(),shR=new THREE.Group();shL.position.set(-.16,.33,0);shR.position.set(.16,.33,0);tor.add(shL,shR);
+  mesh(kgeo.arm,sh,[0,-.15,0],0,shL);mesh(kgeo.arm,sh,[0,-.15,0],0,shR);mesh(new THREE.SphereGeometry(.042,8,6),sk,[0,-.31,0],0,shL);mesh(new THREE.SphereGeometry(.042,8,6),sk,[0,-.31,0],0,shR);
+  const ring=new THREE.Mesh(new THREE.SphereGeometry(.062,14,10),new THREE.MeshBasicMaterial({color:0x5fd38d,transparent:true,opacity:0,depthWrite:false,toneMapped:false}));ring.position.y=1.3;ring.renderOrder=3;root.add(ring);
+  const selR=new THREE.Mesh(new THREE.TorusGeometry(.19,.025,8,32),new THREE.MeshBasicMaterial({color:0xf5a742,transparent:true,opacity:0,depthWrite:false,toneMapped:false}));selR.rotation.x=-Math.PI/2;selR.position.y=1.16;selR.renderOrder=3;root.add(selR);
+  const pick=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,1.3,8),new THREE.MeshBasicMaterial({visible:false}));pick.position.y=.6;pick.userData.kid=k.i;root.add(pick);
+  const bTex=canvasTex(192,128,()=>{});const bSpr=new THREE.Sprite(new THREE.SpriteMaterial({map:bTex,transparent:true,depthTest:false,opacity:0}));bSpr.scale.set(.5,.33,1);bSpr.renderOrder=5;scene.add(bSpr);
+  k.m={root,pelvis,hipL,hipR,tor,head,shL,shR,ring,selR,pick,bTex,bSpr};
+  k.p={torX:0,torY:0,hY:0,hX:0,aRx:-.9,aRz:0,aLx:-.9,aLz:0,rock:0,lift:0,leg:-1.45};}
+KIDS.forEach(buildKid);
+const picks=KIDS.map(k=>k.m.pick);
+const gum=mesh(new THREE.BoxGeometry(.07,.035,.04),std(0xff8fb0,{roughness:.6}),[0,-1,0]);
+
+// leerkracht (jij)
+const T={x:4.4,z:-3.0,face:-Math.PI/2,path:null,m:{}};
+(function(){const g=new THREE.Group();scene.add(g);const pants=std(0x2c3340),top=std(0x2f8f8a,{roughness:.8}),sk=std(0xe2b48e);
+  const lL=new THREE.Group(),lR=new THREE.Group();lL.position.set(-.09,.82,0);lR.position.set(.09,.82,0);g.add(lL,lR);mesh(new THREE.CapsuleGeometry(.075,.62,3,8),pants,[0,-.4,0],0,lL);mesh(new THREE.CapsuleGeometry(.075,.62,3,8),pants,[0,-.4,0],0,lR);
+  mesh(new THREE.CapsuleGeometry(.19,.42,3,12),top,[0,1.16,0],0,g);const h=mesh(new THREE.SphereGeometry(.13,14,12),sk,[0,1.66,0],0,g);mesh(new THREE.SphereGeometry(.138,14,10,0,TAU,0,Math.PI*.55),std(0x5a3b26),[0,1.69,-.015],[-.3,0,0],g);
+  const aL=new THREE.Group(),aR=new THREE.Group();aL.position.set(-.24,1.4,0);aR.position.set(.24,1.4,0);g.add(aL,aR);mesh(new THREE.CapsuleGeometry(.055,.5,3,6),top,[0,-.27,0],0,aL);mesh(new THREE.CapsuleGeometry(.055,.5,3,6),top,[0,-.27,0],0,aR);
+  const halo=new THREE.Mesh(new THREE.RingGeometry(.3,.36,30),new THREE.MeshBasicMaterial({color:0xf5a742,transparent:true,opacity:.75,side:THREE.DoubleSide,depthWrite:false}));halo.rotation.x=-Math.PI/2;halo.position.y=.03;g.add(halo);
+  T.m={g,lL,lR,aL,aR,head:h};})();
+const SPOTS={deur:{x:4.35,z:-3.0,face:-Math.PI/2},bord:{x:2.05,z:-3.3,face:.15},tafel:{x:IT.x,z:IT.z-.12,face:0},midden:{x:1.6,z:.65,face:-1.1},achter:{x:1.6,z:3.55,face:Math.PI}};
+function groupSpot(g){const [gx,gz]=GROUPS[g];return {x:gx+(gx<0?1.15:-1.15)*(g===2||g===5?1:1),z:gz,face:gx<0?-Math.PI/2:Math.PI/2};}
+function teacherTo(sp){if(typeof sp==='string')sp=SPOTS[sp];T.path={x0:T.x,z0:T.z,x1:sp.x,z1:sp.z,f1:sp.face,t:0,d:Math.max(.4,Math.hypot(sp.x-T.x,sp.z-T.z)/1.5)};T.spot=sp;}
+
+/* ================= bord, klok, wisbordjes ================= */
+const BOARD={};let boardKey='leeg';
+function drawBoard(key){boardKey=key;const {c,x}=boardTex.userData,w=c.width,h=c.height;x.clearRect(0,0,w,h);
+  const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#fbfcff');g.addColorStop(1,'#eef2f8');x.fillStyle=g;x.fillRect(0,0,w,h);
+  x.fillStyle='#21324a';x.textBaseline='alphabetic';const F=(s,wt)=>`${wt||700} ${s}px "Instrument Sans", sans-serif`;
+  const head=(t,col)=>{x.fillStyle=col||'#e8813a';x.fillRect(0,0,w,76);x.fillStyle='#fff';x.font=F(40);x.fillText(t,36,52);x.font=F(26,600);x.textAlign='right';x.fillText('maandag',w-36,50);x.textAlign='left';x.fillStyle='#21324a';};
+  const goal=()=>{x.fillStyle='#fff4e3';rr(x,36,h-118,w-72,84,16);x.fill();x.fillStyle='#b8621a';x.font=F(22,700);x.fillText('LESDOEL',62,h-80);x.fillStyle='#21324a';x.font=F(30,600);x.fillText('Ik kan een keersom boven de 10 uitrekenen door te splitsen.',62,h-46);};
+  if(key==='leeg'){head('Goedemorgen groep 5!','#5b7fbf');x.font=F(64,800);x.textAlign='center';x.fillText('☀️',w/2,300);x.font=F(36,600);x.fillText('Pak alvast je rekenschrift.',w/2,380);x.textAlign='left';}
+  else if(key==='plan'){head('Dagplanning');const items=[['08:30','Rekenen','#e8813a'],['09:15','Taal','#5b7fbf'],['10:00','Pauze','#5fbf7a'],['10:15','Lezen','#9a6ad6']];
+    items.forEach(([t,n,c2],i)=>{x.fillStyle=c2;rr(x,36,104+i*86,22,64,8);x.fill();x.fillStyle='#21324a';x.font=F(24,600);x.fillText(t,76,146+i*86);x.font=F(38,800);x.fillText(n,180,150+i*86);if(i===0){x.fillStyle='#e8813a';x.font=F(26,700);x.fillText('◀ nu',420,148);}});goal();}
+  else if(key==='act'){head('Opwarmen');x.font=F(30,600);x.fillText('Schrijf op je wisbordje:',60,150);x.font=F(110,800);x.fillText('6 × 4 = ?',90,320);x.fillText('6 × 10 = ?',560,320);goal();}
+  else if(key==='instrA'){head('6 × 14 handig uitrekenen');
+    for(let r=0;r<6;r++)for(let c2=0;c2<14;c2++){x.fillStyle=c2<10?'#5b7fbf':'#e8813a';x.beginPath();x.arc(80+c2*30+(c2>=10?26:0),130+r*30,10,0,TAU);x.fill();}
+    x.strokeStyle='#21324a';x.lineWidth=3;x.setLineDash([8,6]);x.beginPath();x.moveTo(80+9.5*30+13,110);x.lineTo(80+9.5*30+13,300);x.stroke();x.setLineDash([]);
+    x.font=F(28,700);x.fillStyle='#5b7fbf';x.fillText('6 × 10 = 60',100,350);x.fillStyle='#e8813a';x.fillText('6 × 4 = 24',380,350);
+    x.fillStyle='#21324a';x.font=F(52,800);x.fillText('6 × 14',640,150);x.font=F(40,700);x.fillText('= 6 × 10 + 6 × 4',640,212);x.fillText('= 60 + 24',640,268);x.fillStyle='#1f8f59';x.font=F(56,800);x.fillText('= 84',640,336);goal();}
+  else if(key==='instrB'){head('Vermenigvuldigen boven de 10');x.font=F(26,600);
+    ['Manier 1: splitsen  6 × 14 = 6 × 10 + 6 × 4 = 60 + 24 = 84','Manier 2: verdubbelen  3 × 14 = 42, dus 6 × 14 = 84','Manier 3: compenseren  6 × 15 = 90, 90 − 6 = 84','Let op: bij 7 × 13 kan ook 7 × 10 + 7 × 3','En bij 8 × 15: 8 × 15 = 4 × 30 = 120 (halveren-verdubbelen)','Wanneer gebruik je welke manier? Dat hangt ervan af…'].forEach((t,i)=>x.fillText(t,46,130+i*58));goal();}
+  else if(key==='instrC'){head('Onderzoek!','#9a6ad6');x.font=F(46,800);x.fillText('Hoeveel is 6 × 14?',70,200);x.font=F(32,600);x.fillText('Bedenk met je groepje zoveel mogelijk manieren',70,270);x.fillText('om het uit te rekenen.',70,316);goal();}
+  else if(key==='guided'){head('Samen oefenen');x.font=F(40,700);x.fillText('Een krat heeft 13 flessen.',70,170);x.fillText('Hoeveel flessen zitten er in 7 kratten?',70,230);
+    x.fillStyle='#5b7fbf';for(let i=0;i<7;i++){rr(x,74+i*92,282,74,56,8);x.fill();}x.fillStyle='#fff';x.font=F(24,700);for(let i=0;i<7;i++)x.fillText('13',96+i*92,318);goal();}
+  else if(key==='work'){head('Zelfstandig werken','#5fbf7a');x.font=F(40,700);x.fillText('Rekenboek blz. 34, opdracht 1 t/m 6',60,170);x.font=F(32,600);x.fillText('Klaar? → Plustaak in de bak',60,232);x.fillText('Vraag? → Eerst je buur, dan ik',60,282);
+    [['#e25c4a',0],['#f5c542',0],['#5fbf7a',1]].forEach(([c2,on],i)=>{x.fillStyle=on?c2:'#d6dbe2';x.beginPath();x.arc(930,140+i*84,32,0,TAU);x.fill();});x.fillStyle='#21324a';x.font=F(22,600);x.fillText('fluisteren',880,390);goal();}
+  else if(key==='close'){head('Afsluiting');x.font=F(30,600);x.fillText('Exit ticket: schrijf op je briefje',60,150);x.font=F(120,800);x.fillText('8 × 15 = ?',200,330);goal();}
+  else if(key==='closeA'){head('Afsluiting');x.font=F(90,800);x.textAlign='center';x.fillText('👍  👎',w/2,300);x.font=F(36,600);x.fillText('Wat vond je van de les?',w/2,380);x.textAlign='left';}
+  else if(key==='pauze'){head('Pauze!','#5fbf7a');x.font=F(80,800);x.textAlign='center';x.fillText('Lekker buiten spelen',w/2,320);x.textAlign='left';}
+  boardTex.needsUpdate=true;}
+function drawClock(min){const {c,x}=clockTex.userData;const w=c.width;x.clearRect(0,0,w,w);x.fillStyle='#fff';x.beginPath();x.arc(w/2,w/2,w/2-4,0,TAU);x.fill();x.lineWidth=8;x.strokeStyle='#2b2f35';x.stroke();
+  x.fillStyle='#2b2f35';for(let i=0;i<12;i++){const a=i/12*TAU;x.fillRect(w/2+Math.sin(a)*96-3,w/2-Math.cos(a)*96-3,6,6);}
+  const tot=8*60+30+min;const hh=(tot/60)%12,mm=tot%60;const hand=(a,l,wd)=>{x.lineWidth=wd;x.lineCap='round';x.beginPath();x.moveTo(w/2,w/2);x.lineTo(w/2+Math.sin(a)*l,w/2-Math.cos(a)*l);x.stroke();};
+  hand(hh/12*TAU,58,9);hand(mm/60*TAU,88,6);clockTex.needsUpdate=true;}
+function drawKidBoard(k,txt,ok){const {c,x}=k.m.bTex.userData;x.clearRect(0,0,c.width,c.height);x.fillStyle='#fff';rr(x,4,4,184,120,14);x.fill();x.lineWidth=8;x.strokeStyle=ok===true?'#3fbf75':ok===false?'#ef5b45':'#c9ced6';x.stroke();
+  x.fillStyle='#1b2a44';x.font='800 50px "Instrument Sans", sans-serif';x.textAlign='center';x.fillText(txt,96,82);k.m.bTex.needsUpdate=true;}
+
+/* ================= de les: zeven momenten ================= */
+const S={mode:'intro',mi:-1,seg:null,min:0,help:false,xray:false,noticed:new Set(),choices:[],samples:[],acts:3,noise:.1,sel:[],plus:false,incident:false,itKids:[],late:0,phase:'listen',focus:'board'};
+const all=f=>KIDS.forEach(f);const K=id=>KI[id];
+function notice(id){if(!S.noticed.has(id)){S.noticed.add(id);}}
+const MOMENTS=[
+{key:'start',label:'Start',title:'De start',
+ sit:()=>'De bel is gegaan. Groep 5 komt binnen en zoekt een plek. Mo loopt als laatste binnen, capuchon op, en gaat zonder iets te zeggen zitten.',
+ q:'Hoe begin je de ochtend?',theory:'Relatie en structuur · basisbehoeften',
+ opts:[
+  {l:'Meteen beginnen',d:'"Goedemorgen! Pak je rekenschrift, we beginnen meteen."',min:3,board:'leeg',spot:'bord',phase:'listen',load:.8,score:1,
+   cap:'De schriften gaan open. Mo houdt de capuchon op en kijkt naar zijn tafel.',
+   fx:()=>{K('mo').well-=.06;K('mo').att-=.05;},
+   fb:'Efficiënt, maar je laat een kans liggen. Een korte, persoonlijke begroeting kost weinig tijd en laat je meteen zien hoe kinderen binnenkomen. Mo gaf een duidelijk signaal.'},
+  {l:'Begroeten bij de deur',d:'Je geeft ieder kind een hand bij de deur, zegt Mo even apart gedag en zet daarna de dagplanning en het lesdoel op het bord.',min:5,board:'plan',spot:'deur',phase:'listen',load:.6,score:2,
+   cap:'Bij de deur kijkt Mo even op: "Mijn vader is dit weekend verhuisd." Daarna ziet de klas de dagplanning en het lesdoel.',
+   fx:()=>{all(k=>{k.well+=.05;k.att+=.07;});K('mo').well+=.26;K('mo').att+=.16;notice('mo');},
+   fb:'Sterke start. Een begroeting bij de deur bouwt aan de relatie en laat je in één oogopslag zien wie er anders binnenkomt. De dagplanning en het zichtbare lesdoel geven structuur en houvast.'},
+  {l:'Uitgebreide weekendkring',d:'Iedereen vertelt om de beurt wat hij of zij dit weekend heeft gedaan.',min:20,board:'leeg',spot:'midden',phase:'listen',load:1.1,score:0,
+   cap:'De kring duurt lang. Sem en Jesse beginnen te wiebelen, Daan kijkt op de klok. Als Mo aan de beurt is, haalt hij zijn schouders op.',
+   fx:()=>{all(k=>{k.well+=.04;k.att-=.04;});['sem','jesse','daan','milan'].forEach(i=>K(i).att-=.14);},
+   fb:'Aandacht voor elkaar is waardevol, maar twintig minuten kring gaat van je rekenles af. Drukke kinderen haken af, en in een grote kring zeggen stille kinderen zoals Mo juist niets. Een kort één-op-één moment werkt beter.'}]},
+{key:'act',label:'Voorkennis',title:'Voorkennis ophalen',
+ sit:()=>'Vandaag gaat het over keersommen boven de tien. Daarvoor moeten de kinderen de tafels en "keer tien" paraat hebben.',
+ q:'Hoe haal je de voorkennis op?',theory:'Voorkennis activeren · check for understanding',
+ opts:[
+  {l:'Tafel van 6 in koor',d:'De hele klas zegt samen de tafel van 6 op.',min:3,board:'act',spot:'bord',phase:'listen',load:.6,score:1,
+   cap:'De klas zegt de tafel op. Het klinkt goed. Een paar kinderen bewegen hun mond zonder geluid.',fx:()=>{all(k=>k.att+=.02);},
+   fb:'Een koor klinkt als een klas die het kan, maar je hoort niet wie het niet kan. Zwakke rekenaars liften mee op de rest.'},
+  {l:'Wisbordjes',d:'Iedereen schrijft 6 × 4 en 6 × 10 op een wisbordje. Op jouw teken houdt de hele klas tegelijk het bordje omhoog.',min:5,board:'act',spot:'bord',phase:'listen',load:.4,score:2,boards:'act',
+   cap:'Je kijkt de bordjes rond. Bijna alles klopt. Noor heeft 20 opgeschreven, Bram 64. Het bordje van Lotte is leeg.',
+   fx:()=>{all(k=>{k.att+=.08;k.und+=.02;});['noor','bram','lotte'].forEach(notice);},
+   fb:'Precies goed. Met wisbordjes laten alle kinderen tegelijk zien wat ze kunnen. In tien seconden weet je wie de basis nog mist: Noor, Bram, en Lotte die niets durfde op te schrijven.'},
+  {l:'Vingers omhoog',d:'"Wie weet nog hoeveel 6 × 4 is?" Je geeft de beurt aan wie een vinger opsteekt.',min:3,board:'act',spot:'bord',phase:'listen',load:.7,score:0,hands:['yara','daan','saar','emma'],
+   cap:'Yara, Daan en Saar steken meteen hun vinger op. Yara zegt: "24!" Het antwoord klopt.',fx:()=>{all(k=>{if(!['yara','daan','saar','emma'].includes(k.id))k.att-=.03;});},
+   fb:'De vingers gaan omhoog bij de kinderen die het al weten. Je hoort het goede antwoord en denkt dat de klas het snapt. Wie twijfelt, steekt geen vinger op en blijft onzichtbaar.'}]},
+{key:'instr',label:'Instructie',title:'De instructie',
+ sit:()=>'Nu de kern: 6 × 14 uitrekenen door 14 te splitsen in 10 en 4.',
+ q:'Hoe geef je de instructie?',theory:'Modelen en hardop denken · directe instructie',
+ opts:[
+  {l:'Kort voordoen en hardop denken',d:'Je tekent 6 rijen van 14 stippen, knipt bij de 10 en denkt hardop: "6 × 10 weet ik, 6 × 4 ook…" Na tien minuten ben je klaar.',min:10,board:'instrA',spot:'bord',phase:'listen',load:.55,score:2,
+   cap:'De kinderen kijken naar de stippen op het bord. Bij "60 + 24" knikken er een paar. Daan tikt ongeduldig met zijn potlood.',
+   fx:()=>{all(k=>{k.und+=.3*k.att*k.learn;k.att+=.03;});K('daan').att-=.08;},
+   fb:'Effectief. Je maakt je denkstappen zichtbaar met een model (de stippen) en houdt de uitleg kort. Zo blijft er aandacht over voor oefenen.'},
+  {l:'Uitgebreid alles uitleggen',d:'Je legt drie verschillende strategieën uit (splitsen, verdubbelen en compenseren) zodat iedereen er één kan kiezen.',min:18,board:'instrB',spot:'bord',phase:'listen',load:1.4,score:0,
+   cap:'Na tien minuten zakt de aandacht. Een paar kinderen kijken naar buiten, Daan tekent in zijn schrift en Sem wiebelt op zijn stoel.',
+   fx:()=>{all(k=>{k.und+=.14*k.att*k.learn;k.att-=.12;});['daan','sem','jesse'].forEach(i=>K(i).att-=.15);K('noor').und-=.04;K('lotte').well-=.05;},
+   fb:'Grondig bedoeld, maar te veel. Drie strategieën tegelijk overbelasten het werkgeheugen, vooral bij zwakke rekenaars. De lange luistertijd gaat ten koste van de aandacht en de oefentijd.'},
+  {l:'Zelf laten ontdekken',d:'Zonder voorbeeld zoeken de groepjes zelf manieren om 6 × 14 uit te rekenen.',min:12,board:'instrC',spot:'midden',phase:'group',load:.9,score:1,
+   cap:'In het groepje van Daan en Saar gaat het hard. Bij Noor en Bram wordt vooral gekeken. Het wordt rumoerig in de klas.',
+   fx:()=>{all(k=>{const st=k.tmpl.und;k.und+=st>.55?.2:st<.3?0:.1*k.learn;k.att+=st>.55?.08:-.06;});['noor','bram','fatima'].forEach(i=>K(i).att-=.12);S.noise+=.15;},
+   fb:'Onderzoekend leren kan sterk zijn voor kinderen die de basis al beheersen. Zonder voorbeeld vergroot het de verschillen: de sterke rekenaars vliegen, de zwakke weten niet waar ze moeten beginnen.'}]},
+{key:'guided',label:'Samen oefenen',title:'Samen oefenen',
+ sit:()=>'Op het bord staat een verhaaltjessom: "Een krat heeft 13 flessen. Hoeveel flessen zitten er in 7 kratten?"',
+ q:'Hoe controleer je of iedereen het snapt?',theory:'Alle leerlingen actief · wisbordjes en beurtenstokjes',
+ opts:[
+  {l:'Vingers omhoog',d:'"Wie weet het?" Yara en Daan geven het goede antwoord: 91.',min:4,board:'guided',spot:'bord',phase:'listen',load:.7,score:0,hands:['yara','daan','saar'],
+   cap:'Yara zegt "91". Daan legt uit hoe hij het deed. Het lijkt erop dat de klas het snapt.',fx:()=>{all(k=>k.und+=.04*k.att*k.learn);K('fatima').und-=.3;},
+   fb:'Twee sterke kinderen geven het goede antwoord. Je hebt een illusie van begrip. Of Fatima de som heeft begrepen, of Noor kon splitsen, weet je niet.'},
+  {l:'Denken, delen, wisbordjes',d:'Eerst zelf denken, dan overleggen met je buur. Daarna houdt iedereen het antwoord omhoog en trek je een beurtenstokje voor de uitleg.',min:7,board:'guided',spot:'bord',phase:'listen',load:.35,score:2,boards:'guided',
+   cap:'De meeste bordjes tonen 91. Noor heeft 73, Bram heeft niets. Fatima heeft "krat?" geschreven. Lotte schreef 91, maar heel klein.',
+   fx:()=>{all(k=>{k.und+=.15*k.att*k.learn;k.att+=.06;});K('fatima').und-=.3;['noor','bram','fatima','lotte'].forEach(notice);},
+   fb:'Sterk. Iedereen denkt na en iedereen antwoordt, dus je ziet wie vastloopt. Fatima laat zien dat het probleem een woord is, niet het rekenen. Dat had je bij vingers nooit gezien.'},
+  {l:'Snel door naar zelfstandig werken',d:'De tijd dringt. Je laat de som zitten en de kinderen gaan meteen aan het werk.',min:1,board:'guided',spot:'bord',phase:'listen',load:.5,score:0,
+   cap:'De boeken gaan open. Een paar kinderen kijken om zich heen voordat ze beginnen.',fx:()=>{K('fatima').und-=.3;['noor','bram','lotte'].forEach(i=>K(i).att-=.06);},
+   fb:'Tijd gewonnen, maar zonder controle stuur je kinderen aan het werk zonder te weten of ze het kunnen. De fouten zie je pas als het nakijkwerk binnenkomt.'}]},
+{key:'work',label:'Zelf werken',title:'Zelfstandig werken',select:true,view:[[6.4,7.0,8.2],[-.2,.2,-1.1]],
+ sit:()=>'De klas werkt aan blz. 34. Jij gaat aan de instructietafel zitten voor verlengde instructie.',
+ q:'Wie nodig je uit aan de instructietafel?',theory:'Convergente differentiatie · verlengde instructie op basis van wat je ziet',
+ tip:'<b>Kijk eerst rond.</b> Klik op kinderen om te zien wat ze doen. Klik op <b>Kies</b> in het venstertje, of op een naam hieronder om iemand te verwijderen. Kies maximaal 4 kinderen.',
+ opts:[]},
+{key:'onrust',label:'Onrust',title:'Onrust in de klas',view:[[6.0,6.4,7.4],[-.1,.3,-1.2]],
+ sit:()=>`Je zit aan de instructietafel${S.itKids.length?' met '+S.itKids.map(k=>k.n).join(', '):''}. Sem en Jesse rollen een gum over hun tafel heen en weer${S.plus?'':', en Daan, die al klaar is, doet ook mee'}. Het geluid in de klas neemt toe.`,
+ q:'Wat doe je?',theory:'Klassenmanagement · alertheid en overlapping (Kounin)',
+ opts:[
+  {l:'Vanaf je plek roepen',d:'"Sem! Jesse! Nu stoppen!" Je roept het over de klas heen.',min:1,spot:'tafel',phase:'work',load:.5,score:0,
+   cap:'Het is meteen stil. Sem kijkt met een rood hoofd naar zijn tafel. De kinderen aan de instructietafel zijn hun draad kwijt.',
+   fx:()=>{S.incident=false;S.noise=.08;K('sem').well-=.14;K('sem').att+=.08;K('jesse').att+=.08;S.itKids.forEach(k=>k.att-=.1);all(k=>k.att+=.03);},
+   fb:'Het werkt kort, maar je onderbreekt de hele klas en je instructiegroep. Een kind publiekelijk aanspreken kost relatie, en Sem leert vooral dat hij gezien wordt als hij stoort.'},
+  {l:'Non-verbaal ingrijpen',d:'Je maakt oogcontact, wijst naar het stoplicht op het bord en loopt kort naar het groepje: "Gum weg, opdracht 3." Daarna terug naar je tafel.',min:1,spot:'g1',phase:'work',load:.4,score:2,
+   cap:'Sem ziet je kijken. Bij het groepje leg je de gum op je tafel. Een halve minuut later zit iedereen weer te werken.',
+   fx:()=>{S.incident=false;S.noise=.06;K('sem').att+=.22;K('jesse').att+=.2;if(!S.plus)K('daan').att+=.1;},
+   fb:'Precies. Je ziet het vroeg (alertheid), grijpt in zonder je instructiegroep stil te leggen (overlapping) en houdt het klein. Nabijheid en een afgesproken signaal werken beter dan je stem verheffen.'},
+  {l:'Negeren',d:'Je bent druk met je instructiegroep. Het gaat vast vanzelf over.',min:3,spot:'tafel',phase:'work',load:.9,score:0,
+   cap:'Het gaat niet vanzelf over. Andere groepjes kijken om, het geluid stijgt en ook Liam en Milan stoppen met werken.',
+   fx:()=>{S.noise=.6;all(k=>{k.att-=.1;k.well-=.04;});S.itKids.forEach(k=>k.att-=.08);setTimeout(()=>{S.incident=false;},5000);},
+   fb:'Bewust negeren werkt soms bij klein aandacht-zoekend gedrag, maar dit verstoort anderen. Onrust is besmettelijk: hoe later je ingrijpt, hoe groter de groep die meedoet.'}]},
+{key:'close',label:'Afsluiting',title:'De afsluiting',view:'home',
+ sit:()=>S.min>=41?`Het is ${clockStr(S.min)}. De bel gaat bijna.`:'De les loopt op zijn eind. Iedereen gaat terug naar zijn eigen plek.',
+ q:'Hoe sluit je de les af?',theory:'Formatief evalueren · exit ticket',
+ opts:[
+  {l:'"Wie vond het leuk?"',d:'Duim omhoog of duim omlaag.',min:2,board:'closeA',spot:'bord',phase:'listen',load:.5,score:0,
+   cap:'Bijna alle duimen gaan omhoog. Mo steekt niets op.',fx:()=>{},
+   fb:'Gezellig, maar je weet nu hoe leuk ze het vonden, niet wat ze geleerd hebben. Het lesdoel komt niet meer terug.'},
+  {l:'Exit ticket en lesdoel',d:'Je kijkt terug naar het lesdoel. Iedereen maakt één som (8 × 15) op een briefje en laat het zien voordat de pauze begint.',min:4,board:'close',spot:'bord',phase:'listen',load:.3,score:2,boards:'exit',
+   cap:'Je ziet in één oogopslag wie 8 × 15 kan splitsen. Dat geeft je de groepjes voor morgen.',fx:()=>{all(k=>k.und+=.03);},
+   fb:'Sterk. Het exit ticket koppelt terug naar het lesdoel en geeft jou informatie voor de volgende les. Dat is formatief evalueren in vier minuten.'},
+  {l:'Meteen pauze',d:'"Ruim maar op, het is pauze!"',min:0,board:'pauze',spot:'deur',phase:'listen',load:.3,score:0,
+   cap:'De klas stormt naar buiten.',fx:()=>{},
+   fb:'Zonder afsluiting blijft het lesdoel in de lucht hangen. Voor jou blijft onzeker wat er geleerd is, en voor de kinderen ook.'}]}];
+// micro-acties (kort bij een kind langs)
+const MICRO={mo:{t:'Je hurkt even naast Mo: "Gaat het? Je mag het straks aan me vertellen." Mo knikt en slaat zijn schrift open.',f:k=>{k.well+=.22;k.att+=.15;}},
+ lotte:{t:'Je wijst naar haar antwoord: "Dit klopt, schrijf het maar groot op." Lotte glimlacht even.',f:k=>{k.well+=.12;k.att+=.1;k.und+=.06;}},
+ noor:{t:'Je legt een tafelkaart en een strook met tien stippen bij Noor neer. Ze begint te tekenen.',f:k=>{k.und+=.1;k.att+=.12;}},
+ fatima:{t:'Je tekent een krat met flessen erin. Fatima: "Oh, een bak!" Ze rekent de som meteen uit.',f:k=>{k.und+=.2;k.att+=.1;}},
+ daan:{t:'Je geeft Daan een uitdagende som: "Kan het ook met 16 × 25?" Hij gaat er meteen voor zitten.',f:k=>{k.att+=.25;}},
+ bram:{t:'Je vraagt Bram om voor te doen hoe hij opdracht 1 deed. Hij aarzelt lang. Dan zegt hij: "Ik snap het niet."',f:k=>{k.und+=.06;k.att+=.1;}},
+ sem:{t:'Je legt even je hand op de tafel bij Sem: "Opdracht 2, kom op." Hij gaat verder.',f:k=>{k.att+=.18;}}};
+
+/* ================= gedrag ================= */
+const BOARDP=V(.4,1.5,-3.9);
+function behaviorOf(k){
+  if(k.walk)return 'walk';
+  if(k.boardUntil&&S.segT<k.boardUntil)return 'board';
+  if(k.handUntil&&S.segT<k.handUntil)return 'hand';
+  const ph=S.phase,a=k.att,inIT=S.itKids.includes(k);
+  if(S.incident&&(k.id==='sem'||k.id==='jesse'||(k.id==='daan'&&!S.plus)))return k.id==='daan'?'rock':'fiddle';
+  if(k.id==='mo'&&k.well<.36)return R()<.85?'down':'window';
+  if(ph==='work'||ph==='group'){
+    if(inIT)return a>.45?(R()<.5?'listen':'write'):'window';
+    if(ph==='group'&&a>.5)return R()<.6?'chat':'write';
+    if(k.id==='lotte'&&k.well<.62&&a>.3)return R()<.6?'stuck':'peek';
+    if(a>.55){if(k.und>=(k.key?.55:.5))return 'write';if(k.id==='lotte')return R()<.6?'stuck':'peek';if(k.id==='fatima'||k.id==='bram')return 'peek';if(k.id==='noor')return 'stuck';return k.shy>.6?'stuck':(R()<.5?'hand':'stuck');}
+    if(k.id==='daan')return R()<.6?'draw':'rock';
+    if(a>.32)return k.imp>.5?(R()<.5?'chat':'rock'):(k.shy>.6?'window':'chat');
+    return k.imp>.5?'rock':(k.well<.45?'down':'window');}
+  // luisterfase
+  if(a>.6)return 'listen';
+  if(k.id==='daan')return 'draw';
+  if(a>.38)return k.imp>.55?(R()<.5?'chat':'rock'):(R()<.5?'window':'listen');
+  return k.imp>.55?'rock':(k.well<.45?'down':'window');}
+function headWorld(k){return V(k.m.root.position.x,1.0,k.m.root.position.z);}
+function lookPoint(k,b){const r=k.m.root.position;
+  if(b==='listen'||b==='hand'||b==='board'){if(S.itKids.includes(k)||S.focus==='teacher')return V(T.x,1.55,T.z);return BOARDP;}
+  if(b==='chat')return k.buddy?V(k.buddy.m.root.position.x,1.0,k.buddy.m.root.position.z):BOARDP;
+  if(b==='window')return V(-6,1.6,r.z+.4);
+  if(b==='peek')return k.buddy?V(k.buddy.table.x,.62,k.buddy.table.z):BOARDP;
+  if(b==='fiddle'){const o=k.buddy||k;return V((k.table.x+o.table.x)/2,.62,(k.table.z+o.table.z)/2);}
+  if(b==='rock')return V(r.x+Math.sin(S.t*.7+k.i)*3,1.2,r.z+Math.cos(S.t*.5+k.i)*3);
+  return V(k.table.x,.6,k.table.z);}
+const _v=new THREE.Vector3();
+function updateKid(k,dt){const m=k.m,p=k.p;
+  k.bT=(k.bT||0)-dt;if(k.bT<=0||k.forceB){k.beh=behaviorOf(k);k.bT=1.4+R()*2.4;k.forceB=false;}
+  const b=k.beh;
+  // lopen
+  if(k.walk){const w=k.walk;w.t+=dt/w.d;const e=ease(w.t);m.root.position.set(lerp(w.x0,w.x1,e),0,lerp(w.z0,w.z1,e));const tgtF=w.t<.95?Math.atan2(w.x1-w.x0,w.z1-w.z0):w.f1;
+    m.root.rotation.y=lerp(m.root.rotation.y,tgtF,clamp(dt*8,0,1));if(w.t>=1){k.walk=null;m.root.rotation.y=w.f1;k.forceB=true;}}
+  const walking=!!k.walk;
+  // doelhouding
+  let t={torX:0,torY:0,hY:0,hX:0,aRx:-.95,aRz:.12,aLx:-.95,aLz:-.12,rock:0,lift:0,leg:-1.45};
+  if(walking){t.lift=.22;t.leg=Math.sin(S.t*9+k.i)*.5;t.aRx=-Math.sin(S.t*9+k.i)*.4;t.aLx=-t.aRx;}
+  else{
+    m.root.updateMatrixWorld();_v.copy(lookPoint(k,b));m.root.worldToLocal(_v);let yaw=Math.atan2(_v.x,_v.z);const pitch=Math.atan2(.95-_v.y,Math.hypot(_v.x,_v.z));
+    yaw=clamp(yaw,-1.7,1.7);t.torY=yaw*.35;t.hY=clamp(yaw*.65,-1.1,1.1);t.hX=clamp(pitch,-.4,.8);
+    if(b==='write'||b==='draw'){t.aRx=-1.05+Math.sin(S.t*(b==='draw'?4:7)+k.i)*.06;t.aRz=.25+Math.sin(S.t*5+k.i)*.05;t.torX=.18;t.hX=.65;}
+    if(b==='stuck'){t.aLx=-2.3;t.aLz=-.5;t.torX=.15;t.hX=.55;}
+    if(b==='peek'){t.torX=.12;t.aRx=-1.0;}
+    if(b==='hand'){t.aRx=-2.95;t.aRz=.15;}
+    if(b==='board'){t.aRx=-2.05;t.aLx=-2.05;t.aRz=-.15;t.aLz=.15;t.hX=-.1;}
+    if(b==='down'){t.torX=.95;t.hX=.4;t.hY=.5;t.torY=0;t.aRx=-1.3;t.aLx=-1.3;}
+    if(b==='window'){t.torX=-.08;}
+    if(b==='rock'){t.rock=Math.sin(S.t*6+k.i)*.07-.04;t.torX=-.1;}
+    if(b==='fiddle'){t.aRx=-1.15+Math.sin(S.t*6+k.i)*.12;t.aRz=.35;t.torX=.2;}
+    if(b==='chat'){t.torX=.05;}
+    if(b==='listen'){t.hX+=Math.sin(S.t*.9+k.i)*.03;}}
+  const r=clamp(dt*(walking?12:5),0,1);for(const key in t)p[key]=lerp(p[key],t[key],r);
+  m.pelvis.position.y=.42+p.lift;m.tor.rotation.set(p.torX,p.torY,0);m.head.rotation.set(p.hX,p.hY-p.torY*.2,0);
+  m.shR.rotation.set(p.aRx,0,p.aRz);m.shL.rotation.set(p.aLx,0,p.aLz);m.hipL.rotation.x=walking?p.leg:-1.45;m.hipR.rotation.x=walking?-p.leg:-1.45;
+  m.root.rotation.x=p.rock;
+  // ringen
+  const showR=S.help||S.xray;const col=k.att>.62?0x5fd38d:k.att>.4?0xffcb3d:0xff6a55;m.ring.material.color.setHex(col);m.ring.material.opacity=lerp(m.ring.material.opacity,showR?.85:0,clamp(dt*6,0,1));
+  const sel=S.mode==='decide'&&MOMENTS[S.mi]&&MOMENTS[S.mi].select&&S.sel.includes(k);m.selR.material.opacity=lerp(m.selR.material.opacity,sel?.95:(selKid===k?.6:0),clamp(dt*8,0,1));
+  // wisbordje
+  const bo=b==='board'?1:0;m.bSpr.material.opacity=lerp(m.bSpr.material.opacity,bo,clamp(dt*7,0,1));m.bSpr.visible=m.bSpr.material.opacity>.02;
+  m.bSpr.position.set(m.root.position.x,1.55,m.root.position.z);}
+function seatKid(k,immediate){const s=k.seat;if(immediate){k.walk=null;k.m.root.position.set(s.x,0,s.z);k.m.root.rotation.set(0,s.face,0);}else walkKid(k,s.x,s.z,s.face);}
+function walkKid(k,x,z,f){const r=k.m.root.position;k.walk={x0:r.x,z0:r.z,x1:x,z1:z,f1:f,t:0,d:Math.max(.6,Math.hypot(x-r.x,z-r.z)/1.1)};}
+
+/* ================= tijd & segmenten ================= */
+const clockStr=m=>{const t=8*60+30+Math.round(m);return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');};
+function clampState(){all(k=>{k.att=clamp(k.att,.05,.98);k.und=clamp(k.und,0,1);k.well=clamp(k.well,.05,1);});}
+function avg(f){return KIDS.reduce((s,k)=>s+f(k),0)/KIDS.length;}
+function startSegment(opt,mi){const mom=MOMENTS[mi];
+  if(opt.board)drawBoard(opt.board);
+  if(opt.spot==='g1')teacherTo(groupSpot(1));else if(opt.spot)teacherTo(opt.spot);
+  S.phase=opt.phase||'listen';S.focus=opt.spot==='midden'?'teacher':'board';
+  opt.fx&&opt.fx();clampState();
+  const realDur=clamp(5+opt.min*.42,5.5,13);S.seg={opt,mi,d:realDur,min0:S.min,min1:S.min+opt.min,load:opt.load||.6,boardsShown:false};S.segT=0;
+  // bordjes / vingers
+  KIDS.forEach(k=>{k.boardUntil=0;k.handUntil=0;});
+  if(opt.boards){setTimeout(()=>{},0);KIDS.forEach(k=>{const r2=boardFor(opt.boards,k);drawKidBoard(k,r2.t,r2.ok);k.boardUntil=1.2+realDur*.62;k.forceB=true;});SND.pling();}
+  if(opt.hands){opt.hands.forEach(id=>{K(id).handUntil=realDur*.5;K(id).forceB=true;});}
+  KIDS.forEach(k=>{k.forceB=true;});
+  S.mode='play';showCaption(opt.cap,clockStr(S.min)+' · '+mom.title.toUpperCase());$('#card').classList.remove('open');$('#skip').style.display='inline-flex';renderSteps();}
+function boardFor(type,k){if(type==='act'){if(k.id==='noor')return{t:'20',ok:false};if(k.id==='bram')return{t:'64',ok:false};if(k.id==='lotte')return{t:'',ok:null};return{t:'24 · 60',ok:true};}
+  if(type==='guided'){if(k.id==='fatima')return{t:'krat?',ok:null};if(k.id==='lotte')return{t:'91',ok:true};if(k.id==='bram'&&k.und<.55)return{t:'',ok:null};if(k.und<.45)return{t:k.id==='noor'?'73':String(70+Math.floor(R()*15)),ok:false};return{t:'91',ok:true};}
+  if(type==='exit'){const ok=k.und>=.68;return{t:ok?'120':['105','90','115','?'][k.i%4],ok:ok?true:false};}
+  return{t:'',ok:null};}
+function stepSeg(dt){const g=S.seg;if(!g)return;S.segT+=dt;const f=clamp(S.segT/g.d,0,1);const newMin=lerp(g.min0,g.min1,f);const dm=newMin-S.min;S.min=newMin;
+  if(dm>0){const L=g.load;all(k=>{const inIT=S.itKids.includes(k);let eq=.92-L*(.22+k.drift*5)+(k.mod||0)-(1-k.well)*.35+(inIT?.12:0);
+      if(k.id==='daan'&&S.phase==='listen')eq-=.15;if(S.incident&&(k.g===1||k.g===2))eq-=.15;eq=clamp(eq,.08,.95);
+      k.att+=(eq-k.att)*(1-Math.exp(-.13*dm));if(S.phase==='work'&&!inIT)k.und+=.011*dm*k.att*k.learn;if(inIT)k.und+=.008*dm;});
+    if(S.incident)S.noise=Math.min(.7,S.noise+.02*dm);
+    clampState();S.sampleAcc=(S.sampleAcc||0)+dm;if(S.sampleAcc>=.5){S.sampleAcc=0;S.samples.push({m:S.min,a:avg(k=>k.att),n:clamp(S.noise+(1-avg(k=>k.att))*.4,0,1)});}}
+  drawClockMaybe();
+  if(S.segT>=g.d)endSegment();}
+let lastClockMin=-1;function drawClockMaybe(){const m=Math.floor(S.min);if(m!==lastClockMin){lastClockMin=m;drawClock(m);}$('#clock').firstChild.nodeValue=clockStr(S.min);}
+function endSegment(){const g=S.seg;S.seg=null;$('#skip').style.display='none';hideCaption();
+  const mi=g.mi;
+  // overgangen
+  if(MOMENTS[mi].key==='guided'){S.phase='work';drawBoard('work');teacherTo('tafel');S.focus='board';}
+  if(MOMENTS[mi].key==='work'){}
+  if(mi>=MOMENTS.length-1){finishLesson();return;}
+  openMoment(mi+1);}
+
+/* ================= kaart ================= */
+function renderSteps(){$('#steps').innerHTML=MOMENTS.map((m,i)=>`<span class="${i<S.mi||(i===S.mi&&S.mode==='play')?'done':''} ${i===S.mi&&S.mode==='decide'?'cur':''}" title="${m.label}"></span>`).join('');
+  $('#phaseLbl').textContent=S.mode==='intro'?'VOOR DE LES':S.mode==='report'?'NABESPREKING':MOMENTS[S.mi]?MOMENTS[S.mi].label.toUpperCase():'';}
+function openMoment(mi){S.mi=mi;S.mode='decide';const m=MOMENTS[mi];KIDS.forEach(k=>{k.forceB=true;k.boardUntil=0;k.handUntil=0;});
+  if(m.view)m.view==='home'?flyTo(HOME.p,HOME.t,1.6):flyTo(m.view[0],m.view[1],1.6);
+  if(m.key==='onrust'){S.incident=true;S.noise=.42;S.phase='work';KIDS.forEach(k=>k.forceB=true);SND.giggle();}
+  if(m.key==='close'){S.itKids.forEach(k=>seatKid(k,false));S.itKids=[];S.phase='listen';S.incident=false;S.noise=Math.min(S.noise,.12);teacherTo('bord');}
+  if(m.key==='work'){S.phase='work';S.sel=[];S.plus=false;drawBoard('work');}
+  renderSteps();const c=$('#card');let h=`<div class="time">${clockStr(S.min)} · moment ${mi+1} van ${MOMENTS.length}</div><h2>${m.title}</h2><p class="sit">${m.sit()}</p><p class="q">${m.q}</p>`;
+  if(m.select){h+=`<div class="sel" id="selList"></div><label class="chk"><input type="checkbox" id="plusChk"> <span><b>Plustaak klaarleggen</b> voor wie de stof al beheerst (Daan en Saar)</span></label><button class="go" id="selGo">Start het zelfstandig werken</button>${m.tip?`<div class="tip">${m.tip}</div>`:''}`;}
+  else{h+=m.opts.map((o,i)=>`<button class="opt" data-i="${i}"><kbd>${i+1}</kbd><b>${o.l}</b><span>${o.d}</span></button>`).join('');
+    if(mi===0)h+=`<div class="tip"><b>Tip:</b> klik op een kind om te zien wat het doet. Kijken mag altijd, ook tijdens het kiezen.</div>`;}
+  c.innerHTML=h;c.scrollTop=0;c.classList.add('open');
+  $$('#card .opt').forEach(b=>b.addEventListener('click',()=>choose(+b.dataset.i)));
+  if(m.select){renderSel();$('#plusChk').addEventListener('change',e=>{S.plus=e.target.checked;});$('#selGo').addEventListener('click',confirmSelection);}}
+function choose(i){if(S.mode!=='decide')return;const m=MOMENTS[S.mi];if(m.select)return;const o=m.opts[i];if(!o)return;
+  // afsluiting als de bel al gaat
+  S.choices.push({mi:S.mi,i,o});SND.click();closeKid();startSegment(o,S.mi);}
+function renderSel(){const el=$('#selList');if(!el)return;el.innerHTML=S.sel.length?S.sel.map(k=>`<i data-k="${k.i}">${k.n}</i>`).join(''):'<em>Nog niemand gekozen.</em>';
+  $$('#selList i').forEach(b=>b.addEventListener('click',()=>{toggleSel(KIDS[+b.dataset.k]);}));const go=$('#selGo');if(go)go.textContent=S.sel.length?`Start: ${S.sel.length} aan de instructietafel`:'Start zonder verlengde instructie';}
+function toggleSel(k){const ix=S.sel.indexOf(k);if(ix>=0)S.sel.splice(ix,1);else{if(S.sel.length>=4){toast('Maximaal 4 kinderen aan de instructietafel.');return;}S.sel.push(k);}renderSel();if(selKid===k)renderKidCard(k);SND.click();}
+function needsHelp(k){return k.und<.55||(k.id==='lotte'&&k.well<.62);}
+function confirmSelection(){const m=MOMENTS[S.mi];const sel=S.sel.slice();S.itKids=sel;
+  sel.forEach((k,j)=>{const s=ITSEATS[j];walkKid(k,s.x,s.z,s.face);});
+  let good=0,need=0;
+  all(k=>{const inIT=sel.includes(k);const needs=needsHelp(k);if(needs)need++;
+    if(inIT&&needs){k.und+=.3;k.att+=.14;k.well+=k.id==='lotte'?.12:.04;good++;notice(k.id);}
+    else if(inIT&&!needs){k.att-=.14;k.und+=.02;}
+    else if(needs){k.att-=.16;k.und+=.03;k.well-=.1;}
+    else k.und+=.06*k.att;});
+  if(S.plus){K('daan').att+=.28;K('daan').mod=.2;K('saar').att+=.15;K('saar').mod=.1;notice('daan');}else{K('daan').att-=.2;K('daan').mod=-.25;K('saar').att-=.06;K('saar').mod=-.05;}
+  clampState();
+  const wrong=sel.filter(k=>k.tmpl.und>=.7).map(k=>k.n);const missed=KIDS.filter(k=>['noor','fatima','bram','lotte'].includes(k.id)&&!sel.includes(k)).map(k=>k.n);
+  const score=clamp(Math.round((good/Math.max(1,Math.min(4,need)))*2-(wrong.length?1:0)),0,2)+0;
+  const opt={l:sel.length?`Aan de instructietafel: ${sel.map(k=>k.n).join(', ')}`:'Geen verlengde instructie',d:S.plus?'Met plustaak voor Daan en Saar':'Zonder plustaak',min:12,spot:'tafel',phase:'work',load:.45,score:score>=2&&S.plus?2:score>=1?1:0,
+    cap:(sel.length?`${sel.map(k=>k.n).join(', ')} ${sel.length===1?'komt':'komen'} aan de instructietafel zitten. `:'Je loopt rond in de klas. ')+(S.plus?'Daan en Saar pakken de plustaak.':'Daan is al snel klaar en kijkt om zich heen.'),
+    fx:null,
+    fb:selFeedback(sel,wrong,missed)};
+  S.choices.push({mi:S.mi,i:-1,o:opt});drawBoard('work');closeKid();startSegment(opt,S.mi);}
+function selFeedback(sel,wrong,missed){let t='';const hit=sel.filter(k=>['noor','fatima','bram','lotte'].includes(k.id)).map(k=>k.n);
+  if(hit.length)t+=`Goed gezien: ${hit.join(', ')} ${hit.length===1?'had':'hadden'} de verlengde instructie echt nodig. `;
+  if(missed.length)t+=`Je miste ${missed.join(', ')}. ${missed.length===1?'Dit kind kwam':'Deze kinderen kwamen'} vast te zitten zonder hulp. `;
+  if(wrong.length)t+=`${wrong.join(', ')} beheerste de stof al. Verlengde instructie is dan verloren tijd. `;
+  t+=S.plus?'De plustaak hield Daan en Saar uitgedaagd.':'Zonder plustaak raakte Daan verveeld, en dat zag je terug in de onrust.';
+  return t+' Differentiëren werkt pas als je kiest op basis van wat je ziet, niet op gevoel.';}
+
+/* ================= kaartje van een kind ================= */
+let selKid=null;
+function obsText(k){const b=k.beh,bud=k.buddy?k.buddy.n:'de buur';
+  const ph=S.phase;
+  if(b==='walk')return `Loopt naar ${S.itKids.includes(k)?'de instructietafel':'de eigen plek'}.`;
+  if(b==='board'){const bt=boardFor(S.seg&&S.seg.opt.boards||'act',k);return bt.t?`Houdt het wisbordje omhoog: "${bt.t}".`:'Houdt een leeg wisbordje omhoog.';}
+  if(b==='hand')return 'Steekt de vinger op en kijkt naar jou.';
+  if(b==='down')return k.id==='mo'?'Ligt met het hoofd op tafel, capuchon op. Het schrift is nog dicht.':'Ligt met het hoofd op de armen.';
+  if(b==='window')return k.id==='mo'?'Staart naar buiten. Reageert niet als de buurman iets vraagt.':'Kijkt naar buiten.';
+  if(b==='chat')return ph==='group'?`Overlegt met ${bud} over de som.`:`Praat met ${bud}. Het gaat niet over de les.`;
+  if(b==='rock')return k.id==='daan'?'Wiebelt op de stoel. Het schrift is al dicht.':'Wiebelt op de stoel en kijkt rond.';
+  if(b==='fiddle')return `Rolt een gum heen en weer met ${bud}.`;
+  if(b==='draw')return 'Tekent in de kantlijn van het schrift.';
+  if(b==='peek'){if(k.id==='fatima')return `Kijkt op het schrift van ${bud}. Haar vinger staat bij het woord "kratten" in de opdracht.`;if(k.id==='bram')return `Kijkt op het schrift van ${bud} en schrijft dan iets op.`;return `Kijkt steeds op het schrift van ${bud}.`;}
+  if(b==='stuck'){if(k.id==='noor')return 'Zit stil boven de som en telt op de vingers.';if(k.id==='lotte')return 'Gumt een antwoord uit, schrijft het opnieuw op en gumt het weer uit.';return 'Zit stil boven de som. Er staat nog niets.';}
+  if(b==='write'){if(k.id==='daan'||k.id==='saar')return S.plus&&S.mi>=4?'Werkt geconcentreerd aan de plustaak.':'Werkt snel. Is al bij de laatste opdracht.';return S.itKids.includes(k)?'Rekent mee aan de instructietafel.':'Werkt geconcentreerd en schrijft sommen op.';}
+  if(b==='listen')return S.itKids.includes(k)?'Luistert naar je uitleg aan de instructietafel.':'Kijkt naar het bord en volgt de uitleg.';
+  return 'Zit op de eigen plek.';}
+function signalVisible(k){const b=k.beh;
+  if(k.id==='mo')return k.well<.4||b==='down'||b==='window';
+  if(k.id==='noor')return b==='stuck'||(b==='board'&&k.und<.5);
+  if(k.id==='fatima')return b==='peek'||b==='board';
+  if(k.id==='lotte')return b==='stuck'||b==='peek'||b==='board';
+  if(k.id==='daan')return b==='draw'||b==='rock';
+  if(k.id==='bram')return b==='peek'||b==='board';
+  return false;}
+function renderKidCard(k){const el=$('#kid');let h=`<button class="x" id="kX" aria-label="Sluiten">×</button><h3>${k.n}</h3><div class="lbl">Wat zie je?</div><p>${obsText(k)}</p>`;
+  const m=MOMENTS[S.mi];
+  if(S.xray){h+=`<div class="lbl">Wat er echt speelde</div><p>${PROFILE[k.id]||GENERIC}</p><div class="bars">${[['Betrokken',k.att],['Begrip',k.und],['Welbevinden',k.well]].map(([n,v])=>`<span>${n}</span><span class="bar"><i style="width:${Math.round(v*100)}%;background:${v>.62?'var(--ok)':v>.4?'var(--mid)':'var(--bad)'}"></i></span>`).join('')}</div>`;}
+  else if(S.mode==='decide'&&m&&m.select&&!k.walk){const on=S.sel.includes(k);h+=`<button class="btn ${on?'on':'acc'} act" id="kSel">${on?'✓ Gekozen · verwijderen':'Kies voor de instructietafel'}</button>`;}
+  else if((S.mode==='decide'||S.mode==='play')&&!k.microDone&&S.mi>=0){h+=`<button class="btn act" id="kAct" ${S.acts<=0?'disabled':''}>Kort bij ${k.n} langs (${S.acts} van 3 over)</button>`;}
+  el.innerHTML=h;el.classList.add('on');$('#kX').onclick=closeKid;
+  const s=$('#kSel');if(s)s.onclick=()=>toggleSel(k);const a=$('#kAct');if(a)a.onclick=()=>microAct(k);}
+function openKid(k){selKid=k;if(!S.xray&&S.mode!=='report'&&signalVisible(k))notice(k.id);renderKidCard(k);positionKid();SND.click();}
+function closeKid(){selKid=null;$('#kid').classList.remove('on');}
+function positionKid(){if(!selKid)return;const el=$('#kid');const p=V(selKid.m.root.position.x,1.45,selKid.m.root.position.z).project(camera);
+  let x=(p.x*.5+.5)*innerWidth+24,y=(-p.y*.5+.5)*innerHeight-70;const w=280,hh=el.offsetHeight||160;if(x+w>innerWidth-(S.mode==='decide'&&innerWidth>900?410:12))x=(p.x*.5+.5)*innerWidth-w-24;
+  el.style.left=clamp(x,12,innerWidth-w-12)+'px';el.style.top=clamp(y,100,innerHeight-hh-12)+'px';}
+function microAct(k){if(S.acts<=0||k.microDone)return;S.acts--;k.microDone=true;const mc=MICRO[k.id];
+  const prevSpot=T.spot;teacherTo({x:k.seat.x+(k.seat.face>0?-.55:.55)*(k.walk||S.itKids.includes(k)?0:1),z:k.seat.z+.05,face:k.seat.face+Math.PI});
+  if(mc){mc.f(k);}else{k.att+=.1;}notice(k.id);clampState();S.min+=1;drawClockMaybe();
+  S.micro=(S.micro||[]);S.micro.push(k.n);
+  showCaption(mc?mc.t:`Je loopt even langs ${k.n} en kijkt mee. ${k.n} gaat geconcentreerd verder.`,clockStr(S.min)+' · KORT LANGS');setTimeout(()=>{if(!S.seg)hideCaption();},4200);
+  setTimeout(()=>{if(prevSpot&&!S.seg)teacherTo(prevSpot);},3200);k.forceB=true;renderKidCard(k);}
+
+/* ================= captions & toasts ================= */
+function showCaption(t,head){const c=$('#caption');c.innerHTML=`<small>${head||'WAT JE ZIET'}</small>${t}`;c.classList.add('on');}
+function hideCaption(){$('#caption').classList.remove('on');}
+function toast(t){showCaption(t,'LET OP');clearTimeout(toast.h);toast.h=setTimeout(()=>{if(!S.seg)hideCaption();},2200);}
+
+/* ================= nabespreking ================= */
+function computeScores(){const samples=S.samples.length?S.samples:[{a:avg(k=>k.att)}];const attAvg=samples.reduce((s,x)=>s+x.a,0)/samples.length;
+  const und=avg(k=>k.und),well=avg(k=>k.well);const late=Math.max(0,S.min-45);
+  const closeChoice=S.choices.find(c=>MOMENTS[c.mi].key==='close');
+  const noiseAvg=samples.reduce((a,x)=>a+(x.n||.2),0)/samples.length;const roep=S.choices.some(c=>MOMENTS[c.mi].key==='onrust'&&c.i===0)?.6:0;
+  const s={leer:clamp(((und-.4)/.45)*10-late*.25,1,10),betr:clamp(((attAvg-.36)/.42)*10,1,10),klim:clamp(((well-.45)/.33)*10*.5+clamp(1-(noiseAvg-.15)/.4,0,1)*10*.5-roep,1,10),zicht:clamp(S.noticed.size/SIGNALS.length*10,0,10)};
+  s.exit=KIDS.filter(k=>k.und>=.68).length;s.late=late;s.closeI=closeChoice?closeChoice.i:-1;return s;}
+const scol=v=>v>=7.5?'var(--ok)':v>=5.5?'var(--mid)':'var(--bad)';
+function finishLesson(){S.mode='report';SND.bell();drawClock(Math.floor(S.min));renderSteps();$('#card').classList.remove('open');closeKid();
+  const sc=computeScores();const prev=store.get('mo830-last');store.set('mo830-last',{leer:sc.leer,betr:sc.betr,klim:sc.klim,zicht:sc.zicht});
+  const tile=(k,n,v,txt)=>`<div class="tile"><small>${n}</small><b style="color:${scol(v)}">${v.toFixed(1).replace('.',',')}</b><span>${txt}</span>${prev&&prev[k]!=null?`<span class="prev">vorige keer: ${(+prev[k]).toFixed(1).replace('.',',')}</span>`:''}</div>`;
+  const exitTxt=sc.closeI===1?`Exit ticket: ${sc.exit} van de 24 kinderen konden 8 × 15 splitsen.`:'Zonder exit ticket weet je niet precies wie het lesdoel haalde.';
+  let h=`<div class="kick2">Nabespreking · ${clockStr(S.min)}${sc.late>0?` · je les liep ${Math.round(sc.late)} minuten uit`:''}</div><h2>Hoe ging je les?</h2>
+   <div class="tiles">${tile('leer','Leeropbrengst',sc.leer,exitTxt)}${tile('betr','Betrokkenheid',sc.betr,'Gemiddeld over de hele les.')}${tile('klim','Klimaat',sc.klim,'Welbevinden, rust en veiligheid.')}${tile('zicht','Zicht op de klas',sc.zicht,`${S.noticed.size} van de ${SIGNALS.length} signalen gezien.`)}</div>
+   <h3>Betrokkenheid van de klas tijdens de les</h3><canvas id="chart"></canvas>
+   <h3>Zicht op de klas: wie zag je?</h3><div class="kidsum">${SIGNALS.map(sg=>{const k=K(sg.id);const y=S.noticed.has(sg.id);return `<div class="ks"><span class="st ${y?'y':'n'}">${y?'GEZIEN':'GEMIST'}</span><b>${k.n}</b> · <span style="color:var(--muted)">${sg.lbl}</span><br>${PROFILE[sg.id]}<em>Zichtbaar aan: ${sg.how}</em></div>`;}).join('')}</div>
+   <h3>Je beslissingen</h3>${S.choices.map(c=>{const m=MOMENTS[c.mi];const col=c.o.score===2?'var(--ok)':c.o.score===1?'var(--mid)':'var(--bad)';
+     return `<div class="dec"><div class="t">${m.label}<i style="background:${col}"></i></div><div><h4>${m.title}</h4><div class="you">Jij koos: <b>${c.o.l}</b>${c.mi===4?` · ${c.o.d}`:''}</div><p>${c.o.fb}</p>${c.o.score<2&&m.opts.length?`<p style="margin-top:6px;color:var(--ink)"><b>Sterker:</b> ${m.opts.find(o=>o.score===2).l.toLowerCase()}.</p>`:''}<span class="th">${m.theory}</span></div></div>`;}).join('')}
+   ${S.micro&&S.micro.length?`<p style="font-size:14px;color:var(--muted)">Je ging kort langs bij: ${S.micro.join(', ')}.</p>`:''}
+   <h3>Om over door te praten</h3><div class="qs"><ul>
+     <li>Welk signaal miste je, en wat had je op dat moment moeten zien of doen?</li>
+     <li>Waar observeerde je, en waar vulde je zelf iets in?</li>
+     <li>Wanneer kies je voor vingers, en wanneer laat je iedereen tegelijk antwoorden?</li>
+     <li>Mo had vandaag geen rekenprobleem. Hoe weeg je welbevinden tegen de lesplanning?</li></ul></div>
+   <div class="rbtns"><button class="big" id="rAgain">↻ Speel de les opnieuw</button><button class="btn" id="rXray">Bekijk de klas met röntgenblik</button></div>`;
+  $('#repBody').innerHTML=h;$('#report').classList.add('open');$('#repBody').parentElement.scrollTop=0;
+  $('#rAgain').onclick=()=>{$('#report').classList.remove('open');resetLesson(true);};
+  $('#rXray').onclick=()=>{$('#report').classList.remove('open');S.xray=true;$('#xbar').classList.add('on');flyTo(HOME.p,HOME.t);};
+  requestAnimationFrame(drawChart);}
+function drawChart(){const c=$('#chart');if(!c)return;const d=Math.min(devicePixelRatio,2);const w=c.clientWidth,h=c.clientHeight;c.width=w*d;c.height=h*d;const x=c.getContext('2d');x.scale(d,d);
+  const L=38,Rr=14,Tp=14,B=26;const maxM=Math.max(45,S.min);const X=m=>L+(w-L-Rr)*m/maxM,Y=a=>Tp+(h-Tp-B)*(1-a);
+  x.strokeStyle='rgba(255,255,255,.08)';x.fillStyle='rgba(244,239,230,.5)';x.font='11px JetBrains Mono, monospace';
+  [0,.5,1].forEach(a=>{x.beginPath();x.moveTo(L,Y(a));x.lineTo(w-Rr,Y(a));x.stroke();x.fillText(Math.round(a*100)+'%',4,Y(a)+4);});
+  for(let m=0;m<=maxM;m+=15){x.fillText(clockStr(m),X(m)-18,h-6);}
+  // momenten
+  let acc=0;S.choices.forEach(cc=>{x.strokeStyle='rgba(245,167,66,.35)';x.setLineDash([3,4]);x.beginPath();x.moveTo(X(acc),Tp);x.lineTo(X(acc),h-B);x.stroke();x.setLineDash([]);acc+=cc.o.min;});
+  if(maxM>45){x.fillStyle='rgba(255,106,85,.12)';x.fillRect(X(45),Tp,X(maxM)-X(45),h-Tp-B);}
+  const pts=[{m:0,a:avg(k=>k.tmpl.att)}].concat(S.samples);
+  const g=x.createLinearGradient(0,Tp,0,h-B);g.addColorStop(0,'rgba(95,211,141,.35)');g.addColorStop(1,'rgba(255,106,85,.05)');
+  x.beginPath();pts.forEach((p,i)=>i?x.lineTo(X(p.m),Y(p.a)):x.moveTo(X(p.m),Y(p.a)));x.lineTo(X(pts[pts.length-1].m),h-B);x.lineTo(X(0),h-B);x.closePath();x.fillStyle=g;x.fill();
+  x.beginPath();pts.forEach((p,i)=>i?x.lineTo(X(p.m),Y(p.a)):x.moveTo(X(p.m),Y(p.a)));x.strokeStyle='#f5a742';x.lineWidth=2.5;x.stroke();}
+
+/* ================= reset / start ================= */
+function resetLesson(go){KIDS.forEach(k=>{Object.assign(k,k.tmpl);k.mod=0;k.boardUntil=0;k.handUntil=0;k.microDone=false;k.bT=0;seatKid(k,true);});
+  Object.assign(S,{mode:'intro',mi:-1,seg:null,min:0,noticed:new Set(),choices:[],samples:[],acts:3,noise:.1,sel:[],plus:false,incident:false,itKids:[],xray:false,phase:'listen',micro:[],sampleAcc:0});
+  T.x=SPOTS.deur.x;T.z=SPOTS.deur.z;T.face=SPOTS.deur.face;T.path=null;T.spot=SPOTS.deur;drawBoard('leeg');drawClock(0);lastClockMin=-1;$('#clock').firstChild.nodeValue='08:30';
+  $('#xbar').classList.remove('on');closeKid();hideCaption();renderSteps();R=mulberry32(5);
+  if(go){SND.bell();setTimeout(()=>openMoment(0),900);}}
+function startLesson(){$('#intro').classList.remove('open');if(!SND.on)setSound(true);resetLesson(true);}
+
+/* ================= camera ================= */
+let fly=null;function flyTo(p,t,d){fly={p0:camera.position.clone(),t0:controls.target.clone(),p1:V(...p),t1:V(...t),k:0,dur:reduced?.01:(d||1.4)};}
+
+/* ================= geluid ================= */
+const SND=(function(){let C=null,master,rev,noiseBuf,on=false,chatG,chatF;
+  function init(){if(C)return;C=new (window.AudioContext||window.webkitAudioContext)();master=C.createGain();master.gain.value=0;master.connect(C.destination);
+    rev=C.createConvolver();const len=C.sampleRate*1.4|0;const ir=C.createBuffer(2,len,C.sampleRate);for(let ch=0;ch<2;ch++){const d=ir.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.5);}rev.buffer=ir;const rg=C.createGain();rg.gain.value=.35;rev.connect(rg);rg.connect(master);
+    noiseBuf=C.createBuffer(1,C.sampleRate*2,C.sampleRate);const nd=noiseBuf.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;
+    const s=C.createBufferSource();s.buffer=noiseBuf;s.loop=true;chatF=C.createBiquadFilter();chatF.type='bandpass';chatF.frequency.value=900;chatF.Q.value=1.4;
+    const am=C.createGain();const lfo=C.createOscillator();lfo.frequency.value=3.1;const lg=C.createGain();lg.gain.value=.35;lfo.connect(lg);lg.connect(am.gain);am.gain.value=.65;lfo.start();
+    chatG=C.createGain();chatG.gain.value=0;s.connect(chatF);chatF.connect(am);am.connect(chatG);chatG.connect(master);chatG.connect(rev);s.start();}
+  function env(g,t0,a,p,d){g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(p,t0+a);g.gain.exponentialRampToValueAtTime(.0001,t0+a+d);}
+  function tone(f,t0,d,v,type){const o=C.createOscillator();o.type=type||'sine';o.frequency.value=f;const g=C.createGain();env(g,t0,.01,v,d);o.connect(g);g.connect(master);g.connect(rev);o.start(t0);o.stop(t0+d+.05);}
+  return {set(v){init();on=v;C.resume();master.gain.setTargetAtTime(v?.8:0,C.currentTime,.2);},get on(){return on;},
+    tick(){if(!on||!C)return;const busy=S.mode==='play'||S.mode==='decide';const n=busy?clamp(S.noise*.6+(1-avg(k=>k.att))*.35+(S.incident?.25:0),0,1):0;
+      chatG.gain.setTargetAtTime(busy?.012+.11*n:0,C.currentTime,.5);chatF.frequency.setTargetAtTime(700+700*n,C.currentTime,.6);},
+    bell(){if(!on||!C)return;const t=C.currentTime;for(let i=0;i<14;i++){tone(1318,t+i*.09,.08,.06,'triangle');tone(1975,t+i*.09,.06,.03,'sine');}},
+    pling(){if(!on||!C)return;const t=C.currentTime;tone(880,t,.25,.07);tone(1320,t+.08,.3,.05);},
+    giggle(){if(!on||!C)return;const t=C.currentTime;for(let i=0;i<5;i++)tone(600+Math.random()*300,t+i*.11,.08,.025,'triangle');},
+    click(){if(!on||!C)return;tone(700,C.currentTime,.04,.03,'square');}};})();
+function setSound(v){SND.set(v);$('#bSound').classList.toggle('on',v);$('#sndWave').setAttribute('d',v?'M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12':'M17 9l4 6M21 9l-4 6');}
+
+/* ================= interactie ================= */
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();let downXY=null;
+function pickKid(e){const r=canvas.getBoundingClientRect();mouse.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(mouse,camera);const h=ray.intersectObjects(picks,false)[0];return h?KIDS[h.object.userData.kid]:null;}
+canvas.addEventListener('pointerdown',e=>{downXY=[e.clientX,e.clientY];});
+canvas.addEventListener('pointerup',e=>{if(!downXY||Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1])>6)return;if(S.mode==='intro')return;const k=pickKid(e);
+  if(k){const m=MOMENTS[S.mi];if(S.mode==='decide'&&m&&m.select&&e.shiftKey){toggleSel(k);}openKid(k);}else closeKid();});
+canvas.addEventListener('pointermove',e=>{const tip=$('#tipName');if(e.buttons||S.mode==='intro'){tip.style.display='none';canvas.style.cursor='';return;}const k=pickKid(e);
+  if(k){tip.textContent=k.n;tip.style.display='block';tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY-10)+'px';canvas.style.cursor='pointer';}else{tip.style.display='none';canvas.style.cursor='';}});
+$$('.mode').forEach(b=>b.addEventListener('click',()=>{$$('.mode').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-checked',x===b);});S.help=b.dataset.mode==='hulp';$('#bHelp2').classList.toggle('on',S.help);}));
+$('#bStart').onclick=startLesson;
+$('#bHelp2').onclick=()=>{S.help=!S.help;$('#bHelp2').classList.toggle('on',S.help);toast(S.help?'Hulp aan: gekleurde ringen tonen de betrokkenheid.':'Hulp uit: je ziet alleen gedrag.');};
+$('#bSound').onclick=()=>setSound(!SND.on);
+$('#bInfo').onclick=()=>$('#info').classList.add('open');$('#infoClose').onclick=()=>$('#info').classList.remove('open');
+$('#xBack').onclick=()=>{S.xray=false;$('#xbar').classList.remove('on');closeKid();$('#report').classList.add('open');requestAnimationFrame(drawChart);};
+function setPresent(on){document.body.classList.toggle('present',on);$('#bPresent').classList.toggle('on',on);if(on){if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});}else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});}
+$('#bPresent').onclick=()=>setPresent(!document.body.classList.contains('present'));
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement){document.body.classList.remove('present');$('#bPresent').classList.remove('on');}});
+const skip=document.createElement('button');skip.id='skip';skip.className='btn';skip.textContent='⏩ Verder';skip.style.bottom='110px';$('#app').appendChild(skip);skip.onclick=()=>{if(S.seg){const g=S.seg;stepSeg(g.d-S.segT+.01);}};
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;
+  if(S.mode==='decide'&&['1','2','3'].includes(e.key))choose(+e.key-1);
+  else if(e.key==='Escape'){if($('#info').classList.contains('open'))$('#info').classList.remove('open');else closeKid();}
+  else if((e.key==='Enter'||e.key===' ')&&$('#intro').classList.contains('open')){e.preventDefault();startLesson();}});
+
+/* ================= loop ================= */
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);renderer.setPixelRatio(Math.min(devicePixelRatio,2));camera.aspect=w/h;camera.fov=w/h<1?52:36;camera.updateProjectionMatrix();}
+addEventListener('resize',resize);resize();
+let last=performance.now(),first=true;S.t=0;
+function updateTeacher(dt){const m=T.m;if(T.path){const p=T.path;p.t+=dt/p.d;const e=ease(p.t);T.x=lerp(p.x0,p.x1,e);T.z=lerp(p.z0,p.z1,e);
+    const dir=Math.atan2(p.x1-p.x0,p.z1-p.z0);T.face=p.t<.92?dir:lerp(T.face,p.f1,clamp(dt*6,0,1));const sw=Math.sin(S.t*8)*.45;m.lL.rotation.x=sw;m.lR.rotation.x=-sw;m.aL.rotation.x=-sw*.6;m.aR.rotation.x=sw*.6;
+    if(p.t>=1){T.path=null;T.face=p.f1;}}
+  else{m.lL.rotation.x=lerp(m.lL.rotation.x,0,dt*6);m.lR.rotation.x=lerp(m.lR.rotation.x,0,dt*6);
+    const talking=S.mode==='play'&&S.phase==='listen';m.aR.rotation.x=lerp(m.aR.rotation.x,talking?-.9-Math.sin(S.t*2.2)*.35:-.05,dt*4);m.aR.rotation.z=talking?.25:0;m.aL.rotation.x=lerp(m.aL.rotation.x,0,dt*4);
+    if(T.spot&&!T.path)T.face=lerp(T.face,T.spot.face,clamp(dt*4,0,1));}
+  m.g.position.set(T.x,0,T.z);m.g.rotation.y=T.face;}
+function frame(dt){S.t+=dt;
+  if(S.mode==='play'&&S.seg)stepSeg(dt);
+  KIDS.forEach(k=>updateKid(k,dt));updateTeacher(dt);
+  if(S.incident){const a=K('sem').table,b=K('jesse').table;const u=(Math.sin(S.t*3.2)+1)/2;gum.position.set(lerp(a.x,b.x,u)+.1,.665,lerp(a.z,b.z,u));gum.rotation.y=S.t*6;gum.visible=true;}else gum.visible=false;
+  if(fly){fly.k+=dt/fly.dur;const e=ease(fly.k);camera.position.lerpVectors(fly.p0,fly.p1,e);controls.target.lerpVectors(fly.t0,fly.t1,e);if(fly.k>=1)fly=null;}
+  controls.update();renderer.render(scene,camera);positionKid();SND.tick();
+  if(selKid&&(S.t*4|0)!==(S.t*4-dt*4|0))refreshKidText();
+  if(first){first=false;$('#loader').classList.add('gone');}}
+function refreshKidText(){if(!selKid)return;const p=$('#kid p');if(p)p.textContent=obsText(selKid);}
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;frame(dt);}
+resetLesson(false);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{drawBoard(boardKey);});
+camera.position.set(11,14,16);flyTo(HOME.p,HOME.t,2.4);
+requestAnimationFrame(loop);
+window.__mo={reset:resetLesson,openMoment,step:(n,d)=>{for(let i=0;i<n;i++)frame(d||1/60);},S,KIDS,MOMENTS,choose,toggleSel,confirmSelection,startLesson,computeScores,openKid,camera,controls,K};
+})();
+</script>
+</body>
+</html>
